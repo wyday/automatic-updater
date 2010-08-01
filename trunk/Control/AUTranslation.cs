@@ -2,11 +2,21 @@
 {
     public class AUTranslation
     {
+#if WPF
+        // wpf menus require underscores for hint characters
+        string m_CheckForUpdatesMenu = "_Check for updates";
+        string m_DownloadUpdateMenu = "_Download and Update now";
+        string m_InstallUpdateMenu = "_Install update now";
+        string m_CancelUpdatingMenu = "_Cancel updating";
+        string m_CancelCheckingMenu = "_Cancel update checking";
+#else
         string m_CheckForUpdatesMenu = "&Check for updates";
         string m_DownloadUpdateMenu = "&Download and Update now";
         string m_InstallUpdateMenu = "&Install update now";
         string m_CancelUpdatingMenu = "&Cancel updating";
         string m_CancelCheckingMenu = "&Cancel update checking";
+#endif
+
         string m_HideMenu = "Hide";
         string m_ViewChangesMenu = "View changes in version %version%";
 
