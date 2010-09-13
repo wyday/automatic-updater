@@ -6,6 +6,7 @@ using System.Globalization;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -47,6 +48,8 @@ namespace wyDay.Controls
         static AutomaticUpdater()
         {
             DefaultStyleKeyProperty.OverrideMetadata(typeof(AutomaticUpdater), new FrameworkPropertyMetadata(typeof(AutomaticUpdater)));
+
+            ForegroundProperty = TextElement.ForegroundProperty.AddOwner(typeof(AutomaticUpdater), new FrameworkPropertyMetadata(SystemColors.ControlTextBrush, FrameworkPropertyMetadataOptions.Inherits));
         }
 
         AutoUpdaterInfo AutoUpdaterInfo;
@@ -452,13 +455,9 @@ namespace wyDay.Controls
 
         string Text
         {
-            get
-            {
-                return formattedText.Text;
-            }
             set
             {
-                formattedText = new FormattedText(value, CultureInfo.GetCultureInfo("en-us"), FlowDirection.LeftToRight, new Typeface("Segoe UI"), 12, Brushes.Black);
+                formattedText = new FormattedText(value, CultureInfo.GetCultureInfo("en-us"), FlowDirection.LeftToRight, new Typeface("Segoe UI"), 12, Foreground);
 
 
                 expandedWidth = (int)formattedText.Width + 22;
@@ -492,11 +491,26 @@ namespace wyDay.Controls
 
         public double FontSize { get; set; } */
 
-
         //TODO: include decent Font handling
- 
 
+        public static readonly DependencyProperty ForegroundProperty;
 
+        /// <summary>
+        /// Gets or sets a brush that describes the foreground color. This is a dependency property.
+        /// </summary>
+        [Bindable(true), Category("Appearance"), Description("The brush that paints the foreground of the control. The default value is the system dialog font color.")]
+        public Brush Foreground
+        {
+            get
+            {
+                return (Brush)GetValue(ForegroundProperty);
+            }
+            set
+            {
+                SetValue(ForegroundProperty, value);
+            }
+        }
+        
         #endregion
 
 
