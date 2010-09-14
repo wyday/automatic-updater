@@ -37,22 +37,13 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
-    <Reference Include="System.Xml" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="System.Xaml">
       <RequiredTargetFramework>4.0</RequiredTargetFramework>
     </Reference>
-    <Reference Include="UIAutomationProvider" />
     <Reference Include="WindowsBase" />
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
-    <Reference Include="WindowsFormsIntegration" />
   </ItemGroup>
   <ItemGroup>
     <ApplicationDefinition Include="App.xaml">
@@ -100,10 +91,6 @@
     <ProjectReference Include="..\ControlWPF4\AutomaticUpdaterWPF4.csproj">
       <Project>{48449B4C-100B-498A-B63C-BCE67D866ADB}</Project>
       <Name>AutomaticUpdaterWPF4</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\TestAppWPF\TestAppWPF.csproj">
-      <Project>{0BF666EE-24BC-4995-888A-60F4D471AB03}</Project>
-      <Name>TestAppWPF</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
