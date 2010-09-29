@@ -27,15 +27,15 @@
         string m_StopDownloading = "Stop downloading update for now";
         string m_StopExtracting = "Stop extracting update for now";
 
-        private string m_TryAgainLater = "Try again later";
-        private string m_TryAgainNow = "Try again now";
-        private string m_ViewError = "View error details";
+        string m_TryAgainLater = "Try again later";
+        string m_TryAgainNow = "Try again now";
+        string m_ViewError = "View error details";
 
         string m_CloseButton = "Close";
         string m_ErrorTitle = "Error";
 
-        private string m_UpdateNowButton = "Update now";
-        private string m_ChangesInVersion = "Changes in version %version%";
+        string m_UpdateNowButton = "Update now";
+        string m_ChangesInVersion = "Changes in version %version%";
 
         string m_FailedToCheck = "Failed to check for updates.";
         string m_FailedToDownload = "Failed to download the update.";
