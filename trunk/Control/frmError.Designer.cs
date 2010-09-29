@@ -37,6 +37,7 @@
             // btnOK
             // 
             this.btnOK.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnOK.AutoSize = true;
             this.btnOK.DialogResult = System.Windows.Forms.DialogResult.Cancel;
             this.btnOK.FlatStyle = System.Windows.Forms.FlatStyle.System;
             this.btnOK.Location = new System.Drawing.Point(259, 228);
@@ -68,6 +69,7 @@
             // btnTryAgainLater
             // 
             this.btnTryAgainLater.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnTryAgainLater.AutoSize = true;
             this.btnTryAgainLater.DialogResult = System.Windows.Forms.DialogResult.Cancel;
             this.btnTryAgainLater.FlatStyle = System.Windows.Forms.FlatStyle.System;
             this.btnTryAgainLater.Location = new System.Drawing.Point(161, 228);

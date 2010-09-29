@@ -22,6 +22,9 @@ namespace wyDay.Controls
             btnTryAgainLater.Text = translation.TryAgainLater;
             lblTitle.Text = messageTitle;
 
+            // resize the buttons to fit their contents
+            btnTryAgainLater.Left = btnOK.Left - btnTryAgainLater.Width - 6;
+
             MinimumSize = new Size(richError.Left + Right - btnTryAgainLater.Left, 250);
         }
 

@@ -37,6 +37,7 @@
             // btnOK
             // 
             this.btnOK.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnOK.AutoSize = true;
             this.btnOK.DialogResult = System.Windows.Forms.DialogResult.Cancel;
             this.btnOK.FlatStyle = System.Windows.Forms.FlatStyle.System;
             this.btnOK.Location = new System.Drawing.Point(259, 228);
@@ -69,6 +70,7 @@
             // btnUpdateNow
             // 
             this.btnUpdateNow.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnUpdateNow.AutoSize = true;
             this.btnUpdateNow.DialogResult = System.Windows.Forms.DialogResult.Cancel;
             this.btnUpdateNow.FlatStyle = System.Windows.Forms.FlatStyle.System;
             this.btnUpdateNow.Location = new System.Drawing.Point(161, 228);

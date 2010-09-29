@@ -29,6 +29,9 @@ namespace wyDay.Controls
             btnUpdateNow.Text = translation.UpdateNowButton;
             btnOK.Text = translation.CloseButton;
 
+            // resize the buttons to fit their contents
+            btnUpdateNow.Left = btnOK.Left - btnUpdateNow.Width - 6;
+
             MinimumSize = new Size(richChanges.Left + Right - btnUpdateNow.Left, 250);
 
             // update now
