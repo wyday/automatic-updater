@@ -800,7 +800,11 @@ namespace wyDay.Controls
                 // begin downloading the update
                 DownloadUpdate();
             }
-            else // UpdateDownloaded or UpdateReadyToInstall
+            else if (UpdateStepOn == UpdateStepOn.UpdateDownloaded)
+            {
+                ExtractUpdate();
+            }
+            else // UpdateReadyToInstall
             {
                 // begin installing the update
                 InstallPendingUpdate();
@@ -1293,7 +1297,7 @@ namespace wyDay.Controls
                     if (internalUpdateType == UpdateType.Automatic)
                         ExtractUpdate();
                     else
-                        UpdateReadyToInstall();
+                        UpdateReadyToExtract();
 
                     break;
                 case UpdateStep.BeginExtraction:
@@ -1315,7 +1319,7 @@ namespace wyDay.Controls
             if (!KeepHidden)
                 Visibility = Visibility.Visible;
 
-            // temporarily diable the collapse timer
+            // temporarily disable the collapse timer
             tmrCollapse.Enabled = false;
 
             // animate this open
@@ -1329,6 +1333,29 @@ namespace wyDay.Controls
                 UpdateAvailable(this, EventArgs.Empty);
         }
 
+        void UpdateReadyToExtract()
+        {
+            CreateMenu(MenuType.InstallAndChanges);
+
+            SetUpdateStepOn(UpdateStepOn.UpdateDownloaded);
+
+            if (!KeepHidden)
+                Show();
+
+            // temporarily disable the collapse timer
+            tmrCollapse.Enabled = false;
+
+            // animate this open
+            BeginAniOpen();
+
+            AnimateImage(BmpInfo, true);
+
+            SetMenuText(translation.InstallUpdateMenu);
+
+            if (ReadyToBeInstalled != null)
+                ReadyToBeInstalled(this, EventArgs.Empty);
+        }
+
         void UpdateReadyToInstall()
         {
             CreateMenu(MenuType.InstallAndChanges);
@@ -1338,7 +1365,7 @@ namespace wyDay.Controls
             if (!KeepHidden)
                 Visibility = Visibility.Visible;
 
-            // temporarily diable the collapse timer
+            // temporarily disable the collapse timer
             tmrCollapse.Enabled = false;
 
             // animate this open
@@ -1486,6 +1513,7 @@ namespace wyDay.Controls
                     Text = translation.UpdateAvailable;
                     break;
 
+                case UpdateStepOn.UpdateDownloaded:
                 case UpdateStepOn.UpdateReadyToInstall:
                     Text = internalUpdateType == UpdateType.CheckAndDownload
                         ? translation.UpdateAvailable
@@ -1607,7 +1635,7 @@ namespace wyDay.Controls
                             if (internalUpdateType == UpdateType.Automatic)
                                 ExtractUpdate();
                             else
-                                UpdateReadyToInstall();
+                                UpdateReadyToExtract();
                             break;
                     }
                 }
