@@ -730,7 +730,7 @@ namespace wyDay.Controls
                 isFullExpanded = Width != collapsedWidth;
 
                 //enable the collapse timer
-                if(isFullExpanded && !insideChildControl && !insideSelf && !isMenuVisible)
+                if (isFullExpanded && !insideChildControl && !insideSelf && !isMenuVisible)
                     tmrCollapse.Enabled = true;
 
                 tmrAniExpandCollapse.Stop();
@@ -853,7 +853,7 @@ namespace wyDay.Controls
                 throw new Exception(
                     "The AutomaticUpdater must finish checking for updates before they can be installed.");
 
-            if(UpdateStepOn == UpdateStepOn.DownloadingUpdate)
+            if (UpdateStepOn == UpdateStepOn.DownloadingUpdate)
                 throw new Exception("The update must be downloaded before you can install it.");
 
             if (UpdateStepOn == UpdateStepOn.ExtractingUpdate)
@@ -1119,7 +1119,7 @@ namespace wyDay.Controls
 
         void InstallPendingUpdate()
         {
-            // send the client the arguments that need to run on succes and failure
+            // send the client the arguments that need to run on success and failure
             updateHelper.RestartInfo(Application.ExecutablePath, AutoUpdaterInfo.AutoUpdateID, Arguments);
         }
 
@@ -1286,7 +1286,7 @@ namespace wyDay.Controls
 
                     // update progress status (only for greater than 0%)
                     
-                    if(e.Progress > 0)
+                    if (e.Progress > 0)
                         Text = currentActionText + ", " + e.Progress + "%";
 
                     // call the progress changed event
@@ -1343,7 +1343,10 @@ namespace wyDay.Controls
                 case UpdateStep.DownloadUpdate:
 
                     // begin extraction
-                    ExtractUpdate();
+                    if (internalUpdateType == UpdateType.Automatic)
+                        ExtractUpdate();
+                    else
+                        UpdateReadyToInstall();
 
                     break;
                 case UpdateStep.BeginExtraction:
@@ -1371,7 +1374,7 @@ namespace wyDay.Controls
                 Width += expandedWidth - Width;
             }
                 // if expanding
-            else if(tmrAniExpandCollapse.Enabled && sizeChange > 0)
+            else if (tmrAniExpandCollapse.Enabled && sizeChange > 0)
             {
                 // re-start the expansion with the new size
                 BeginAniOpen();
@@ -1668,7 +1671,10 @@ namespace wyDay.Controls
                                 Show();
 
                             // begin extraction
-                            ExtractUpdate();
+                            if (internalUpdateType == UpdateType.Automatic)
+                                ExtractUpdate();
+                            else
+                                UpdateReadyToInstall();
                             break;
                     }
                 }
