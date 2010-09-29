@@ -1066,7 +1066,7 @@ namespace wyDay.Controls
 
         void InstallPendingUpdate()
         {
-            // send the client the arguments that need to run on succes and failure
+            // send the client the arguments that need to run on success and failure
             updateHelper.RestartInfo(Assembly.GetEntryAssembly().Location, AutoUpdaterInfo.AutoUpdateID, Arguments);
         }
 
@@ -1290,7 +1290,10 @@ namespace wyDay.Controls
                 case UpdateStep.DownloadUpdate:
 
                     // begin extraction
-                    ExtractUpdate();
+                    if (internalUpdateType == UpdateType.Automatic)
+                        ExtractUpdate();
+                    else
+                        UpdateReadyToInstall();
 
                     break;
                 case UpdateStep.BeginExtraction:
@@ -1601,7 +1604,10 @@ namespace wyDay.Controls
                                 Visibility = Visibility.Visible;
 
                             // begin extraction
-                            ExtractUpdate();
+                            if (internalUpdateType == UpdateType.Automatic)
+                                ExtractUpdate();
+                            else
+                                UpdateReadyToInstall();
                             break;
                     }
                 }

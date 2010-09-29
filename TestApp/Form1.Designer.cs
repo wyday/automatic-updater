@@ -132,7 +132,7 @@
             this.automaticUpdater.Name = "automaticUpdater";
             this.automaticUpdater.Size = new System.Drawing.Size(16, 16);
             this.automaticUpdater.TabIndex = 3;
-            this.automaticUpdater.UpdateType = wyDay.Controls.UpdateType.OnlyCheck;
+            this.automaticUpdater.UpdateType = wyDay.Controls.UpdateType.CheckAndDownload;
             this.automaticUpdater.wyUpdateCommandline = resources.GetString("automaticUpdater.wyUpdateCommandline");
             this.automaticUpdater.CheckingFailed += new wyDay.Controls.FailHandler(this.automaticUpdater_CheckingFailed);
             this.automaticUpdater.ClosingAborted += new System.EventHandler(this.automaticUpdater_ClosingAborted);

@@ -26,7 +26,7 @@ internal class GUIDEditor : UITypeEditor
             {
                 DialogResult dr = DialogResult.Yes;
                 // Pass the UI editor dialog the current property value
-                if(value != null)
+                if (value != null)
                 {
                     dr = MessageBox.Show(
                         "Are you sure you want to overwrite the existing GUID? (You should only do this if you copied the AutomaticUpdate control for a new separate application.)",

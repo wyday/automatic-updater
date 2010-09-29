@@ -102,7 +102,7 @@ namespace wyDay.Controls
 
         void CreateNewPipeClient()
         {
-            if(pipeClient != null)
+            if (pipeClient != null)
             {
                 pipeClient.MessageReceived -= pipeClient_MessageReceived;
                 pipeClient.ServerDisconnected -= pipeClient_ServerDisconnected;
@@ -122,7 +122,7 @@ namespace wyDay.Controls
             // first try to connect to the pipe
             pipeClient.Connect(pipeName);
 
-            if(pipeClient.Connected)
+            if (pipeClient.Connected)
             {
                 // request the processId
                 if (!RetrySend((new UpdateHelperData(UpdateAction.GetwyUpdateProcessID)).GetByteArray()))
@@ -188,7 +188,7 @@ namespace wyDay.Controls
             try
             {
 #if WPF
-                if(OwnerElement.Dispatcher.CheckAccess())
+                if (OwnerElement.Dispatcher.CheckAccess())
                 {
                     // The calling thread owns the dispatcher, and hence the UI element
                     ServerDisconnected();
@@ -277,7 +277,7 @@ namespace wyDay.Controls
             else
             {
                 // process the next in stack
-                if(uhdStack.Count > 0)
+                if (uhdStack.Count > 0)
                 {
                     UpdateHelperData uhd = uhdStack.Pop();
                     UpdateStep = uhd.UpdateStep;
@@ -351,7 +351,7 @@ namespace wyDay.Controls
         void SendAsync(UpdateHelperData uhd)
         {
             // pipeClient is only null when the handle for the form hasn't been created yet
-            if(pipeClient == null)
+            if (pipeClient == null)
             {
                 // buffer the message to send
                 bufferedUHD = uhd;
@@ -359,7 +359,7 @@ namespace wyDay.Controls
             }
 
             // if currently working, add the new message to the stack
-            if(bw.IsBusy)
+            if (bw.IsBusy)
             {
                 uhdStack.Push(uhd);
             }
@@ -412,7 +412,7 @@ namespace wyDay.Controls
                 return;
             }
             
-            if(data.Action == UpdateAction.NewWyUpdateProcess)
+            if (data.Action == UpdateAction.NewWyUpdateProcess)
             {
                 // disconnect from the existing pipeclient
                 pipeClient.Disconnect();
