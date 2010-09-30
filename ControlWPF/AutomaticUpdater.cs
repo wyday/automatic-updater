@@ -1340,7 +1340,7 @@ namespace wyDay.Controls
             SetUpdateStepOn(UpdateStepOn.UpdateDownloaded);
 
             if (!KeepHidden)
-                Show();
+                Visibility = Visibility.Visible;
 
             // temporarily disable the collapse timer
             tmrCollapse.Enabled = false;
@@ -1348,7 +1348,7 @@ namespace wyDay.Controls
             // animate this open
             BeginAniOpen();
 
-            AnimateImage(BmpInfo, true);
+            AnimateImage(Properties.Resources.info, true);
 
             SetMenuText(translation.InstallUpdateMenu);
 
