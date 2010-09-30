@@ -1,0 +1,16 @@
+﻿<Window x:Class="TestAppWPF4.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="MainWindow" Height="284" Width="459" xmlns:my="clr-namespace:wyDay.Controls;assembly=AutomaticUpdaterWPF">
+    <Grid>
+        <my:AutomaticUpdater Height="51" HorizontalAlignment="Left" Margin="112,58,0,0" Name="automaticUpdater1" VerticalAlignment="Top" Width="101" />
+        <Menu Height="21" IsMainMenu="True" VerticalAlignment="Top">
+            <MenuItem Header="Help">
+                <MenuItem Header="Check for updates..." Name="mnuCheckForUpdates" />
+                <Separator />
+                <MenuItem Header="Online Help" />
+                <MenuItem Header="About" />
+            </MenuItem>
+        </Menu>
+    </Grid>
+</Window>
