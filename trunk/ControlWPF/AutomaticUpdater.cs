@@ -1561,31 +1561,26 @@ namespace wyDay.Controls
                 tmrCollapse.Enabled = true;
         }
 
-
-
         void ISupportInitialize.EndInit()
         {
             if (DesignMode)
                 return;
                 
-
             ownerForm = Window.GetWindow(this);
 
             ownerForm.Loaded += ownerForm_Loaded;
 
             updateHelper = new UpdateHelper(ownerForm)
-            {
-                wyUpdateLocation = GetFullWyUpdateLocation(),
-                ExtraArguments = wyUpdateCommandline
-            };
+                               {
+                                   wyUpdateLocation = GetFullWyUpdateLocation(),
+                                   ExtraArguments = wyUpdateCommandline
+                               };
 
             updateHelper.ProgressChanged += updateHelper_ProgressChanged;
             updateHelper.PipeServerDisconnected += updateHelper_PipeServerDisconnected;
             updateHelper.UpdateStepMismatch += updateHelper_UpdateStepMismatch;
 
-
-            SetMenuText(translation.CheckForUpdatesMenu);
-
+            
             // read settings file for last check time
             AutoUpdaterInfo = new AutoUpdaterInfo(m_GUID, null);
 
@@ -1604,96 +1599,96 @@ namespace wyDay.Controls
                 // start the updater
                 InstallPendingUpdate();
             }
-            else
-            {
-                // get the current update step from the 
-                m_UpdateStepOn = AutoUpdaterInfo.UpdateStepOn;
-
-                if (UpdateStepOn != UpdateStepOn.Nothing)
-                {
-                    version = AutoUpdaterInfo.UpdateVersion;
-                    changes = AutoUpdaterInfo.ChangesInLatestVersion;
-                    changesAreRTF = AutoUpdaterInfo.ChangesIsRTF;
-
-                    switch (UpdateStepOn)
-                    {
-                        case UpdateStepOn.UpdateAvailable:
-                            UpdateReady();
-                            break;
-
-                        case UpdateStepOn.UpdateReadyToInstall:
-                            UpdateReadyToInstall();
-                            break;
-
-                        case UpdateStepOn.UpdateDownloaded:
-
-                            // show the updater control
-                            if (!KeepHidden)
-                                Visibility = Visibility.Visible;
-
-                            // begin extraction
-                            if (internalUpdateType == UpdateType.Automatic)
-                                ExtractUpdate();
-                            else
-                                UpdateReadyToExtract();
-                            break;
-                    }
-                }
-                else if (AutoUpdaterInfo.AutoUpdaterStatus == AutoUpdaterStatus.UpdateSucceeded)
-                {
-                    // show the control
-                    Visibility = KeepHidden ? Visibility.Hidden : Visibility.Visible;
-
-                    // set the version & changes
-                    version = AutoUpdaterInfo.UpdateVersion;
-                    changes = AutoUpdaterInfo.ChangesInLatestVersion;
-                    changesAreRTF = AutoUpdaterInfo.ChangesIsRTF;
-
-                    // clear the changes and resave
-                    AutoUpdaterInfo.ClearSuccessError();
-                    AutoUpdaterInfo.Save();
-
-
-                    Text = translation.SuccessfullyUpdated.Replace("%version%", version);
-                    UpdateStepSuccessful(MenuType.UpdateSuccessful);
-
-                    if (UpdateSuccessful != null)
-                        UpdateSuccessful(this, new SuccessArgs { Version = version });
-                }
-                else if (AutoUpdaterInfo.AutoUpdaterStatus == AutoUpdaterStatus.UpdateFailed)
-                {
-                    // show the control
-                    Visibility = KeepHidden ? Visibility.Hidden : Visibility.Visible;
-
-                    // fill the errorTitle & errorMessage
-                    errorTitle = AutoUpdaterInfo.ErrorTitle;
-                    errorMessage = AutoUpdaterInfo.ErrorMessage;
-
-                    // clear the error and resave
-                    AutoUpdaterInfo.ClearSuccessError();
-                    AutoUpdaterInfo.Save();
-
-                    // show failed Text & icon
-                    Text = translation.UpdateFailed;
-                    CreateMenu(MenuType.Error);
-                    AnimateImage(Properties.Resources.cross, true);
-
-                    if (UpdateFailed != null)
-                        UpdateFailed(this, new FailArgs { ErrorTitle = errorTitle, ErrorMessage = errorMessage });
-                }
-                else
-                    Visibility = Visibility.Hidden;
-            }
         }
 
         void ownerForm_Loaded(object sender, RoutedEventArgs e)
         {
+            SetMenuText(translation.CheckForUpdatesMenu);
+
+            // if we want to kill ouself, then don't bother checking for updates
+            if (ClosingForInstall)
+                return;
+
+            // get the current update step from the 
+            m_UpdateStepOn = AutoUpdaterInfo.UpdateStepOn;
+
+            if (UpdateStepOn != UpdateStepOn.Nothing)
+            {
+                version = AutoUpdaterInfo.UpdateVersion;
+                changes = AutoUpdaterInfo.ChangesInLatestVersion;
+                changesAreRTF = AutoUpdaterInfo.ChangesIsRTF;
+
+                switch (UpdateStepOn)
+                {
+                    case UpdateStepOn.UpdateAvailable:
+                        UpdateReady();
+                        break;
+
+                    case UpdateStepOn.UpdateReadyToInstall:
+                        UpdateReadyToInstall();
+                        break;
+
+                    case UpdateStepOn.UpdateDownloaded:
+
+                        // show the updater control
+                        if (!KeepHidden)
+                            Visibility = Visibility.Visible;
+
+                        // begin extraction
+                        if (internalUpdateType == UpdateType.Automatic)
+                            ExtractUpdate();
+                        else
+                            UpdateReadyToExtract();
+                        break;
+                }
+            }
+            else if (AutoUpdaterInfo.AutoUpdaterStatus == AutoUpdaterStatus.UpdateSucceeded)
+            {
+                // show the control
+                Visibility = KeepHidden ? Visibility.Hidden : Visibility.Visible;
+
+                // set the version & changes
+                version = AutoUpdaterInfo.UpdateVersion;
+                changes = AutoUpdaterInfo.ChangesInLatestVersion;
+                changesAreRTF = AutoUpdaterInfo.ChangesIsRTF;
+
+                // clear the changes and resave
+                AutoUpdaterInfo.ClearSuccessError();
+                AutoUpdaterInfo.Save();
+
+
+                Text = translation.SuccessfullyUpdated.Replace("%version%", version);
+                UpdateStepSuccessful(MenuType.UpdateSuccessful);
+
+                if (UpdateSuccessful != null)
+                    UpdateSuccessful(this, new SuccessArgs { Version = version });
+            }
+            else if (AutoUpdaterInfo.AutoUpdaterStatus == AutoUpdaterStatus.UpdateFailed)
+            {
+                // show the control
+                Visibility = KeepHidden ? Visibility.Hidden : Visibility.Visible;
+
+                // fill the errorTitle & errorMessage
+                errorTitle = AutoUpdaterInfo.ErrorTitle;
+                errorMessage = AutoUpdaterInfo.ErrorMessage;
+
+                // clear the error and resave
+                AutoUpdaterInfo.ClearSuccessError();
+                AutoUpdaterInfo.Save();
+
+                // show failed Text & icon
+                Text = translation.UpdateFailed;
+                CreateMenu(MenuType.Error);
+                AnimateImage(Properties.Resources.cross, true);
+
+                if (UpdateFailed != null)
+                    UpdateFailed(this, new FailArgs { ErrorTitle = errorTitle, ErrorMessage = errorMessage });
+            }
+            else
+                Visibility = Visibility.Hidden;
+
             if (m_UpdateType != UpdateType.DoNothing)
             {
-                // if we want to kill ouself, then don't bother checking for updates
-                if (ClosingForInstall)
-                    return;
-
                 // see if enough days have elapsed since last check.
                 TimeSpan span = DateTime.Now.Subtract(AutoUpdaterInfo.LastCheckedForUpdate);
 
