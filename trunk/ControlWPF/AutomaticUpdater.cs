@@ -528,6 +528,12 @@ namespace wyDay.Controls
             if (DesignMode)
                 host.Visibility = Visibility.Hidden;
 
+            MinWidth = 16;
+            Width = 16;
+
+            MinHeight = 16;
+            Height = 16;
+
             ani.Size = new System.Drawing.Size(16, 16);
             ani.Location = new System.Drawing.Point(0, 0);
 
