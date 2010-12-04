@@ -42,7 +42,6 @@ namespace wyDay.Controls
 #else
         readonly Form MainWindow;
 #endif
-        
 
         public event UpdateStepMismatchHandler UpdateStepMismatch;
         public event ResponseHandler ProgressChanged;
