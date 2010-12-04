@@ -66,6 +66,7 @@
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Args.cs" />
+    <Compile Include="AutomaticUpdaterBackend.cs" />
     <Compile Include="AutomaticUpdaterDesigner.cs" />
     <Compile Include="AutoUpdaterInfo.cs" />
     <Compile Include="AUTranslation.cs" />
