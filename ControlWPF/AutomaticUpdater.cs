@@ -1571,8 +1571,11 @@ namespace wyDay.Controls
         {
             if (DesignMode)
                 return;
-                
+
             ownerForm = Window.GetWindow(this);
+
+            if (ownerForm == null)
+                throw new Exception("Could not find the AutomaticUpdater's owner Window. Make sure you're adding the AutomaticUpdater to a Window and not a View, User control, etc.");
 
             ownerForm.Loaded += ownerForm_Loaded;
 
@@ -1586,7 +1589,7 @@ namespace wyDay.Controls
             updateHelper.PipeServerDisconnected += updateHelper_PipeServerDisconnected;
             updateHelper.UpdateStepMismatch += updateHelper_UpdateStepMismatch;
 
-            
+
             // read settings file for last check time
             AutoUpdaterInfo = new AutoUpdaterInfo(m_GUID, null);
 
