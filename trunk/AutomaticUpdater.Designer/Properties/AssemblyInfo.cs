@@ -8,7 +8,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyDescription("AutomaticUpdater.Design")]
 [assembly: AssemblyCompany("wyDay")]
 [assembly: AssemblyProduct("AutomaticUpdater.Design")]
-[assembly: AssemblyCopyright("Copyright © 2005-2010 wyDay")]
+[assembly: AssemblyCopyright("Copyright © 2005-2011 wyDay")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -27,4 +27,4 @@ using System.Runtime.InteropServices;
 //      Build Number
 //      Revision
 //
-[assembly: AssemblyVersion("2.5.26.0")]
+[assembly: AssemblyVersion("2.6.10.0")]
