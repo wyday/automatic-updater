@@ -225,8 +225,6 @@ namespace wyDay.Controls
 
         #endregion
 
-        //Methods and such
-
         /// <summary>
         /// Represents an AutomaticUpdater control.
         /// </summary>
@@ -670,7 +668,7 @@ namespace wyDay.Controls
             if (ClosingForInstall)
                 return;
 
-            // get the current update step from the 
+            // get the current update step from the info file
             m_UpdateStepOn = AutoUpdaterInfo.UpdateStepOn;
 
             if (UpdateStepOn != UpdateStepOn.Nothing)
