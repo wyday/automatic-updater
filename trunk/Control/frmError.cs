@@ -9,18 +9,18 @@ namespace wyDay.Controls
     {
         public bool TryAgainLater { get; private set; }
 
-        public frmError(string messageTitle, string messageBody, AUTranslation translation)
+        public frmError(FailArgs failArgs, AUTranslation translation)
         {
             Font = SystemFonts.MessageBoxFont;
 
             InitializeComponent();
 
-            richError.Text = messageBody;
+            richError.Text = failArgs.ErrorMessage;
 
             Text = translation.ErrorTitle;
             btnOK.Text = translation.CloseButton;
             btnTryAgainLater.Text = translation.TryAgainLater;
-            lblTitle.Text = messageTitle;
+            lblTitle.Text = failArgs.ErrorTitle;
 
             // resize the buttons to fit their contents
             btnTryAgainLater.Left = btnOK.Left - btnTryAgainLater.Width - 6;

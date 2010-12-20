@@ -53,6 +53,11 @@
         /// A more detailed description of the error.
         /// </summary>
         public string ErrorMessage { get; set; }
+
+        /// <summary>
+        /// wyUpdate closed before it should've.
+        /// </summary>
+        public bool wyUpdatePrematureExit { get; set; }
     }
 
     /// <summary>

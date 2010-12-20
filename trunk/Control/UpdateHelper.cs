@@ -2,16 +2,11 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
-using wyUpdate.Common;
-
-#if WPF
-using System.Windows;
-using System.Windows.Threading;
-#else
 using System.Windows.Forms;
-#endif
+using wyUpdate.Common;
 
 
 namespace wyDay.Controls
@@ -26,7 +21,19 @@ namespace wyDay.Controls
 
         Process ClientProcess;
 
-        public string wyUpdateLocation;
+        string m_CompleteWULoc;
+        string m_wyUpdateLocation = "wyUpdate.exe";
+
+        public string wyUpdateLocation
+        {
+            get { return m_wyUpdateLocation; }
+            set
+            {
+                m_wyUpdateLocation = value;
+
+                m_CompleteWULoc = Path.IsPathRooted(value) ? value : Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), value);
+            }
+        }
 
         // extra arguments for wyUpdate
         public string ExtraArguments;
@@ -35,13 +42,6 @@ namespace wyDay.Controls
 
 
         readonly BackgroundWorker bw = new BackgroundWorker();
-
-        // current process ID the client can use to respond
-#if WPF
-        readonly UIElement OwnerElement;
-#else
-        readonly Form MainWindow;
-#endif
 
         public event UpdateStepMismatchHandler UpdateStepMismatch;
         public event ResponseHandler ProgressChanged;
@@ -52,72 +52,36 @@ namespace wyDay.Controls
         [DllImport("User32")]
         static extern int ShowWindow(int hwnd, int nCmdShow);
 
-        
-        // for messages sent before the handle has been created
-        UpdateHelperData bufferedUHD;
 
         readonly Stack<UpdateHelperData> uhdStack = new Stack<UpdateHelperData>(1);
 
-#if WPF
-        public UpdateHelper(UIElement OwnerElement)
+        public UpdateHelper()
         {
-            this.OwnerElement = OwnerElement;
-
             CreateNewPipeClient();
 
             bw.DoWork += bw_DoWork;
             bw.RunWorkerCompleted += bw_RunWorkerCompleted;
         }
-#else // Windows Forms
-        public UpdateHelper(Form OwnerForm)
-        {
-            MainWindow = OwnerForm;
-
-            // if the handle for OwnerForm has already been created, just setup the pipeserver
-            if (OwnerForm.IsHandleCreated)
-            {
-                CreateNewPipeClient();
-            }
-            else
-                OwnerForm.HandleCreated += OwnerForm_HandleCreated;
-
-            bw.DoWork += bw_DoWork;
-            bw.RunWorkerCompleted += bw_RunWorkerCompleted;
-        }
-
-        void OwnerForm_HandleCreated(object sender, EventArgs e)
-        {
-            // remove the event - no longer needed
-            MainWindow.HandleCreated -= OwnerForm_HandleCreated;
-
-            // setup the pipe client
-            CreateNewPipeClient();
-
-            // send any bufferedUHD
-            if (bufferedUHD != null)
-                SendAsync(bufferedUHD);
-        }
-#endif
 
         void CreateNewPipeClient()
         {
             if (pipeClient != null)
             {
-                pipeClient.MessageReceived -= pipeClient_MessageReceived;
-                pipeClient.ServerDisconnected -= pipeClient_ServerDisconnected;
+                pipeClient.MessageReceived -= ProcessReceivedMessage;
+                pipeClient.ServerDisconnected -= ServerDisconnected;
             }
 
             pipeClient = new PipeClient();
 
-            pipeClient.MessageReceived += pipeClient_MessageReceived;
-            pipeClient.ServerDisconnected += pipeClient_ServerDisconnected;
+            pipeClient.MessageReceived += ProcessReceivedMessage;
+            pipeClient.ServerDisconnected += ServerDisconnected;
         }
 
         bool StartClient()
         {
             // get the unique pipe name (the last 246 chars of the complete path)
-            string pipeName = UpdateHelperData.PipenameFromFilename(wyUpdateLocation);
-            
+            string pipeName = UpdateHelperData.PipenameFromFilename(m_CompleteWULoc);
+
             // first try to connect to the pipe
             pipeClient.Connect(pipeName);
 
@@ -134,8 +98,8 @@ namespace wyDay.Controls
                                 {
                                     StartInfo =
                                         {
-                                            FileName = wyUpdateLocation,
-                                            
+                                            FileName = m_CompleteWULoc,
+
                                             // start the client in automatic update mode (a.k.a. wait mode)
                                             Arguments = "/autoupdate",
 
@@ -180,32 +144,6 @@ namespace wyDay.Controls
                     Thread.Sleep(500);
                 }
             }
-        }
-
-        void pipeClient_ServerDisconnected()
-        {
-            try
-            {
-#if WPF
-                if (OwnerElement.Dispatcher.CheckAccess())
-                {
-                    // The calling thread owns the dispatcher, and hence the UI element
-                    ServerDisconnected();
-                }
-                else
-                {
-                    // Invocation required
-                    OwnerElement.Dispatcher.Invoke(DispatcherPriority.Normal, new PipeClient.ServerDisconnectedHandler(ServerDisconnected));
-                }
-#else
-                // don't recieve messages after the main window has closed
-                if (MainWindow.IsDisposed)
-                    return;
-
-                MainWindow.Invoke(new PipeClient.ServerDisconnectedHandler(ServerDisconnected));
-#endif
-            }
-            catch { }
         }
 
         void ServerDisconnected()
@@ -349,14 +287,6 @@ namespace wyDay.Controls
 
         void SendAsync(UpdateHelperData uhd)
         {
-            // pipeClient is only null when the handle for the form hasn't been created yet
-            if (pipeClient == null)
-            {
-                // buffer the message to send
-                bufferedUHD = uhd;
-                return;
-            }
-
             // if currently working, add the new message to the stack
             if (bw.IsBusy)
             {
@@ -372,34 +302,6 @@ namespace wyDay.Controls
             }
         }
 
-        void pipeClient_MessageReceived(byte[] message)
-        {
-            // TODO: remove try-catch block OR handle the error some other way
-            try
-            {
-#if WPF
-                if (OwnerElement.Dispatcher.CheckAccess())
-                {
-                    // The calling thread owns the dispatcher, and hence the UI element
-                    ProcessReceivedMessage(message);
-                }
-                else
-                {
-                    // Invocation required
-                    OwnerElement.Dispatcher.Invoke(DispatcherPriority.Normal, new PipeClient.MessageReceivedHandler(ProcessReceivedMessage), message);
-                }
-#else
-                // don't recieve messages after the main window has closed
-                if (MainWindow.IsDisposed)
-                    return;
-
-                MainWindow.Invoke(new PipeClient.MessageReceivedHandler(ProcessReceivedMessage),
-                                  new object[] {message});
-#endif
-            }
-            catch { }
-        }
-
         void ProcessReceivedMessage(byte[] message)
         {
             // Cast the data to the type of object we sent:
@@ -410,14 +312,14 @@ namespace wyDay.Controls
                 ClientProcess = Process.GetProcessById(data.ProcessID);
                 return;
             }
-            
+
             if (data.Action == UpdateAction.NewWyUpdateProcess)
             {
                 // disconnect from the existing pipeclient
                 pipeClient.Disconnect();
-                
+
                 CreateNewPipeClient();
-                
+
                 ClientProcess = Process.GetProcessById(data.ProcessID);
 
                 TryToConnectToPipe(data.ExtraData[0]);
@@ -439,10 +341,7 @@ namespace wyDay.Controls
 
                 // begin where we left off
                 // if update step == RestartInfo, we need to send the restart info as well
-                if (bufferedUHD != null && UpdateStep == bufferedUHD.UpdateStep)
-                    SendAsync(bufferedUHD);
-                else
-                    SendAsync(new UpdateHelperData(UpdateStep));
+                SendAsync(new UpdateHelperData(UpdateStep));
 
                 return;
             }

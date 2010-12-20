@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using System.Windows.Forms;
 using wyUpdate.Common;
 
-/*
 namespace wyDay.Controls
 {
     /// <summary>
@@ -15,10 +12,9 @@ namespace wyDay.Controls
     {
         AutoUpdaterInfo AutoUpdaterInfo;
 
-        UpdateHelper updateHelper = new UpdateHelper();
-        string m_wyUpdateLocation = "wyUpdate.exe";
+        readonly UpdateHelper updateHelper = new UpdateHelper();
 
-        string m_wyUpdateCommandline;
+        UpdateStepOn m_UpdateStepOn;
 
         UpdateType internalUpdateType = UpdateType.Automatic;
         UpdateType m_UpdateType = UpdateType.Automatic;
@@ -27,12 +23,10 @@ namespace wyDay.Controls
         // changes
         string version, changes;
         bool changesAreRTF;
-        List<RichTextBoxLink> changesLinks;
-        bool ShowButtonUpdateNow;
 
-        string currentActionText;
+        bool RestartInfoSent;
 
-
+        #region Events
 
         /// <summary>
         /// Event is raised before the update checking begins.
@@ -94,6 +88,9 @@ namespace wyDay.Controls
         /// </summary>
         public event SuccessHandler UpToDate;
 
+        #endregion Events
+
+        #region Properties
 
         /// <summary>
         /// Gets or sets the arguments to pass to your app when it's being restarted after an update.
@@ -111,7 +108,7 @@ namespace wyDay.Controls
                     return changes;
 
                 // convert the RTF text to plaintext
-                using (RichTextBox r = new RichTextBox { Rtf = changes })
+                using (RichTextBox r = new RichTextBox {Rtf = changes})
                 {
                     return r.Text;
                 }
@@ -136,7 +133,7 @@ namespace wyDay.Controls
             {
                 // disallow setting after AutoUpdaterInfo is not null
                 if (AutoUpdaterInfo != null)
-                    throw new Exception("You must set the GUID at Design time.");
+                    throw new Exception("You must set the GUID at Design time (or before you call the Initialize function).");
 
                 if (value.IndexOfAny(Path.GetInvalidFileNameChars()) != -1)
                 {
@@ -148,7 +145,14 @@ namespace wyDay.Controls
             }
         }
 
-        UpdateStepOn m_UpdateStepOn;
+        /// <summary>
+        /// Gets the date the updates were last checked for.
+        /// </summary>
+        public DateTime LastCheckDate
+        {
+            get { return AutoUpdaterInfo.LastCheckedForUpdate; }
+        }
+
 
         /// <summary>
         /// Gets the update step the AutomaticUpdater is currently on.
@@ -177,31 +181,240 @@ namespace wyDay.Controls
             }
         }
 
+        /// <summary>
+        /// Gets or sets how much this AutomaticUpdater control should do without user interaction.
+        /// </summary>
+        public UpdateType UpdateType
+        {
+            get { return m_UpdateType; }
+            set
+            {
+                m_UpdateType = value;
+                internalUpdateType = value;
+            }
+        }
 
         /// <summary>
-        /// Construct the 
+        /// Gets the version of the new update.
+        /// </summary>
+        public string Version
+        {
+            get
+            {
+                return version;
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the arguments to pass to wyUpdate when it is started to check for updates.
+        /// </summary>
+        public string wyUpdateCommandline
+        {
+            get { return updateHelper.ExtraArguments; }
+            set { updateHelper.ExtraArguments = value; }
+        }
+
+        /// <summary>
+        /// Gets or sets the relative path to the wyUpdate (e.g. wyUpdate.exe  or  SubDir\\wyUpdate.exe)
+        /// </summary>
+        public string wyUpdateLocation
+        {
+            get { return updateHelper.wyUpdateLocation; }
+            set { updateHelper.wyUpdateLocation = value; }
+        }
+
+        #endregion
+
+        //Methods and such
+
+        /// <summary>
+        /// Represents an AutomaticUpdater control.
         /// </summary>
         public AutomaticUpdaterBackend()
         {
-            //TODO: any initializations
+            Application.ApplicationExit += Application_ApplicationExit;
+
             updateHelper.ProgressChanged += updateHelper_ProgressChanged;
             updateHelper.PipeServerDisconnected += updateHelper_PipeServerDisconnected;
             updateHelper.UpdateStepMismatch += updateHelper_UpdateStepMismatch;
         }
 
-        public void EndInit()
+        /// <summary>
+        /// Proceed with the download and installation of pending updates.
+        /// </summary>
+        public void InstallNow()
         {
-            // read settings file for last check time
-            AutoUpdaterInfo = new AutoUpdaterInfo(m_GUID, null);
+            // throw an exception when trying to Install when no update is ready
 
-            // see if update is pending, if so force install
-            if (AutoUpdaterInfo.UpdateStepOn == UpdateStepOn.UpdateReadyToInstall)
+            if (UpdateStepOn == UpdateStepOn.Nothing)
+                throw new Exception("There must be an update available before you can install it.");
+            
+            if (UpdateStepOn == UpdateStepOn.Checking)
+                throw new Exception(
+                    "The AutomaticUpdater must finish checking for updates before they can be installed.");
+
+            if (UpdateStepOn == UpdateStepOn.DownloadingUpdate)
+                throw new Exception("The update must be downloaded before you can install it.");
+
+            if (UpdateStepOn == UpdateStepOn.ExtractingUpdate)
+                throw new Exception("The update must finish extracting before you can install it.");
+
+            // set the internal update type to autmatic so the user won't be prompted anymore
+            internalUpdateType = UpdateType.Automatic;
+
+            if (UpdateStepOn == UpdateStepOn.UpdateAvailable)
             {
-                // then KillSelf&StartUpdater
-                ClosingForInstall = true;
-
-                // start the updater
+                // begin downloading the update
+                DownloadUpdate();
+            }
+            else if (UpdateStepOn == UpdateStepOn.UpdateDownloaded)
+            {
+                ExtractUpdate();
+            }
+            else // UpdateReadyToInstall
+            {
+                // begin installing the update
                 InstallPendingUpdate();
+            }
+        }
+
+        /// <summary>
+        /// Cancel the checking, downloading, or extracting currently in progress.
+        /// </summary>
+        public void Cancel()
+        {
+            updateHelper.Cancel();
+
+            SetLastSuccessfulStep();
+
+            if (Cancelled != null)
+                Cancelled(this, EventArgs.Empty);
+        }
+
+        void SetLastSuccessfulStep()
+        {
+            if (UpdateStepOn == UpdateStepOn.Checking)
+                UpdateStepOn = UpdateStepOn.Nothing;
+            else
+                UpdateStepOn = UpdateStepOn.UpdateAvailable;
+        }
+
+        /// <summary>
+        /// Check for updates forcefully.
+        /// </summary>
+        /// <param name="recheck">Recheck with the servers regardless of cached updates, etc.</param>
+        /// <returns>Returns true if checking has begun, false otherwise.</returns>
+        public bool ForceCheckForUpdate(bool recheck)
+        {
+            // if not already checking for updates then begin checking.
+            if (recheck || UpdateStepOn == UpdateStepOn.Nothing)
+            {
+                BeforeArgs bArgs = new BeforeArgs();
+
+                if (BeforeChecking != null)
+                    BeforeChecking(this, bArgs);
+
+                if (bArgs.Cancel)
+                {
+                    // close wyUpdate
+                    updateHelper.Cancel();
+                    return false;
+                }
+
+                // show the working animation
+                SetUpdateStepOn(UpdateStepOn.Checking);
+
+                if (recheck)
+                    updateHelper.ForceRecheckForUpdate();
+                else
+                    updateHelper.CheckForUpdate();
+
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Check for updates forcefully.
+        /// </summary>
+        /// <returns>Returns true if checking has begun, false otherwise.</returns>
+        public bool ForceCheckForUpdate()
+        {
+            return ForceCheckForUpdate(false);
+        }
+
+        void InstallPendingUpdate()
+        {
+            // send the client the arguments that need to run on success and failure
+            updateHelper.RestartInfo(Application.ExecutablePath, AutoUpdaterInfo.AutoUpdateID, Arguments);
+        }
+
+        void DownloadUpdate()
+        {
+            BeforeArgs bArgs = new BeforeArgs();
+
+            if (BeforeDownloading != null)
+                BeforeDownloading(this, bArgs);
+
+            if (bArgs.Cancel)
+            {
+                // close wyUpdate
+                updateHelper.Cancel();
+                return;
+            }
+
+            // if the control is hidden show it now (so the user can cancel the downloading if they want)
+            // show the 'working' animation
+            SetUpdateStepOn(UpdateStepOn.DownloadingUpdate);
+
+            updateHelper.DownloadUpdate();
+        }
+
+        void ExtractUpdate()
+        {
+            SetUpdateStepOn(UpdateStepOn.ExtractingUpdate);
+
+            // extract the update
+            updateHelper.BeginExtraction();
+        }
+
+        void updateHelper_UpdateStepMismatch(object sender, Response respType, UpdateStep previousStep)
+        {
+            // we can't install right now
+            if (previousStep == UpdateStep.RestartInfo)
+            {
+                if (ClosingAborted != null)
+                    ClosingAborted(this, EventArgs.Empty);
+            }
+
+            if (respType == Response.Progress)
+            {
+                switch (updateHelper.UpdateStep)
+                {
+                    case UpdateStep.CheckForUpdate:
+                        SetUpdateStepOn(UpdateStepOn.Checking);
+                        break;
+                    case UpdateStep.DownloadUpdate:
+                        SetUpdateStepOn(UpdateStepOn.DownloadingUpdate);
+                        break;
+                    case UpdateStep.BeginExtraction:
+                        SetUpdateStepOn(UpdateStepOn.ExtractingUpdate);
+                        break;
+                }
+            }
+        }
+
+        void updateHelper_PipeServerDisconnected(object sender, EventArgs e)
+        {
+            // the client should only ever exit after success or failure
+            // otherwise it is a premature exit (and needs to be treated as an error)
+            if (UpdateStepOn == UpdateStepOn.Checking
+                || UpdateStepOn == UpdateStepOn.DownloadingUpdate
+                || UpdateStepOn == UpdateStepOn.ExtractingUpdate)
+            {
+                // wyUpdate premature exit error
+                UpdateStepFailed(UpdateStepOn, new FailArgs {wyUpdatePrematureExit = true});
             }
         }
 
@@ -211,9 +424,10 @@ namespace wyDay.Controls
             {
                 case Response.Failed:
 
+                    // show the error icon & menu
                     // and set last successful step
-                    UpdateStepFailed(UpdateStepToUpdateStepOn(e.UpdateStep), e.ExtraData[0], e.ExtraData[1]);
-
+                    UpdateStepFailed(UpdateStepToUpdateStepOn(e.UpdateStep), new FailArgs { ErrorTitle = e.ExtraData[0], ErrorMessage = e.ExtraData[1] });
+                    
                     break;
                 case Response.Succeeded:
 
@@ -230,7 +444,6 @@ namespace wyDay.Controls
                                 version = e.ExtraData[0];
                                 changes = e.ExtraData[1];
                                 changesAreRTF = e.ExtraDataIsRTF[1];
-                                changesLinks = e.LinksData;
 
                                 // save the changes to the AutoUpdateInfo file
                                 AutoUpdaterInfo.UpdateVersion = version;
@@ -247,7 +460,6 @@ namespace wyDay.Controls
                                 version = null;
                                 changes = null;
                                 changesAreRTF = false;
-                                changesLinks = null;
 
                                 AutoUpdaterInfo.ClearSuccessError();
                             }
@@ -281,6 +493,15 @@ namespace wyDay.Controls
             }
         }
 
+        void Application_ApplicationExit(object sender, EventArgs e)
+        {
+            if (RestartInfoSent)
+            {
+                // show client & send the "begin update" message
+                updateHelper.InstallNow();
+            }
+        }
+
         void StartNextStep(UpdateStep updateStepOn)
         {
             // begin the next step
@@ -288,11 +509,9 @@ namespace wyDay.Controls
             {
                 case UpdateStep.CheckForUpdate:
 
-
                     if (!string.IsNullOrEmpty(version))
                     {
                         // there's an update available
-
 
                         if (internalUpdateType == UpdateType.CheckAndDownload
                             || internalUpdateType == UpdateType.Automatic)
@@ -334,161 +553,60 @@ namespace wyDay.Controls
         }
 
 
-
-        /// <summary>
-        /// Check for updates forcefully.
-        /// </summary>
-        /// <param name="recheck">Recheck with the servers regardless of cached updates, etc.</param>
-        /// <returns>Returns true if checking has begun, false otherwise.</returns>
-        public bool ForceCheckForUpdate(bool recheck)
+        void UpdateReady()
         {
-            // if not already checking for updates then begin checking.
-            if (recheck || UpdateStepOn == UpdateStepOn.Nothing)
-            {
-                forceCheck(recheck, true);
-                return true;
-            }
+            SetUpdateStepOn(UpdateStepOn.UpdateAvailable);
 
-            return false;
+            if (UpdateAvailable != null)
+                UpdateAvailable(this, EventArgs.Empty);
         }
 
-        /// <summary>
-        /// Check for updates forcefully.
-        /// </summary>
-        /// <returns>Returns true if checking has begun, false otherwise.</returns>
-        public bool ForceCheckForUpdate()
+        void UpdateReadyToExtract()
         {
-            return ForceCheckForUpdate(false);
+            SetUpdateStepOn(UpdateStepOn.UpdateDownloaded);
+
+            if (ReadyToBeInstalled != null)
+                ReadyToBeInstalled(this, EventArgs.Empty);
         }
 
-        void InstallPendingUpdate()
+        void UpdateReadyToInstall()
         {
-            // send the client the arguments that need to run on success and failure
-            updateHelper.RestartInfo(Application.ExecutablePath, AutoUpdaterInfo.AutoUpdateID, Arguments);
+            SetUpdateStepOn(UpdateStepOn.UpdateReadyToInstall);
+
+            if (ReadyToBeInstalled != null)
+                ReadyToBeInstalled(this, EventArgs.Empty);
         }
 
-        void DownloadUpdate()
+        void AlreadyUpToDate()
         {
-            BeforeArgs bArgs = new BeforeArgs();
+            UpdateStepOn = UpdateStepOn.Nothing;
 
-            if (BeforeDownloading != null)
-                BeforeDownloading(this, bArgs);
-
-            if (bArgs.Cancel)
-            {
-                // close wyUpdate
-                updateHelper.Cancel();
-                return;
-            }
-
-            // if the control is hidden show it now (so the user can cancel the downloading if they want)
-            // show the 'working' animation
-            SetUpdateStepOn(UpdateStepOn.DownloadingUpdate);
-            UpdateProcessing(true);
-
-            CreateMenu(MenuType.CancelDownloading);
-
-            updateHelper.DownloadUpdate();
+            if (UpToDate != null)
+                UpToDate(this, new SuccessArgs { Version = version });
         }
 
-        void ExtractUpdate()
-        {
-            SetUpdateStepOn(UpdateStepOn.ExtractingUpdate);
-
-            CreateMenu(MenuType.CancelExtracting);
-
-            // extract the update
-            updateHelper.BeginExtraction();
-        }
-
-        void updateHelper_UpdateStepMismatch(object sender, Response respType, UpdateStep previousStep)
-        {
-            // we can't install right now
-            if (previousStep == UpdateStep.RestartInfo)
-            {
-                // we need to show the form (it was hidden in ISupport() )
-                if (ClosingForInstall)
-                {
-                    ownerForm.ShowInTaskbar = true;
-                    ownerForm.WindowState = FormWindowState.Normal;
-                }
-
-                if (ClosingAborted != null)
-                    ClosingAborted(this, EventArgs.Empty);
-            }
-
-            if (respType == Response.Progress)
-            {
-                switch (updateHelper.UpdateStep)
-                {
-                    case UpdateStep.CheckForUpdate:
-                        SetUpdateStepOn(UpdateStepOn.Checking);
-                        break;
-                    case UpdateStep.DownloadUpdate:
-                        SetUpdateStepOn(UpdateStepOn.DownloadingUpdate);
-                        break;
-                    case UpdateStep.BeginExtraction:
-                        SetUpdateStepOn(UpdateStepOn.ExtractingUpdate);
-                        break;
-                }
-            }
-        }
-
-        void updateHelper_PipeServerDisconnected(object sender, EventArgs e)
-        {
-            // the client should only ever exit after success or failure
-            // otherwise it is a premature exit (and needs to be treated as an error)
-            if (UpdateStepOn == UpdateStepOn.Checking
-                || UpdateStepOn == UpdateStepOn.DownloadingUpdate
-                || UpdateStepOn == UpdateStepOn.ExtractingUpdate)
-            {
-                UpdateStepFailed(UpdateStepOn, translation.PrematureExitTitle, translation.PrematureExitMessage);
-            }
-        }
-
-        /// <summary>
-        /// Cancel the checking, downloading, or extracting currently in progress.
-        /// </summary>
-        public void Cancel()
-        {
-            updateHelper.Cancel();
-
-            SetLastSuccessfulStep();
-
-            if (Cancelled != null)
-                Cancelled(this, EventArgs.Empty);
-        }
-
-        void SetLastSuccessfulStep()
-        {
-            UpdateStepOn = UpdateStepOn == UpdateStepOn.Checking ? UpdateStepOn.Nothing : UpdateStepOn.UpdateAvailable;
-        }
-
-
-        void UpdateStepFailed(UpdateStepOn us, string errorTitle, string errorMessage)
+        void UpdateStepFailed(UpdateStepOn us, FailArgs args)
         {
             SetLastSuccessfulStep();
-
-            FailArgs failArgs = new FailArgs { ErrorTitle = errorTitle, ErrorMessage = errorMessage };
 
             switch (us)
             {
                 case UpdateStepOn.Checking:
-                    
+
                     if (CheckingFailed != null)
-                        CheckingFailed(this, failArgs);
+                        CheckingFailed(this, args);
 
                     break;
                 case UpdateStepOn.DownloadingUpdate:
-                    
+
                     if (DownloadingOrExtractingFailed != null)
-                        DownloadingOrExtractingFailed(this, failArgs);
+                        DownloadingOrExtractingFailed(this, args);
 
                     break;
                 case UpdateStepOn.ExtractingUpdate:
 
                     if (DownloadingOrExtractingFailed != null)
-                        DownloadingOrExtractingFailed(this, failArgs);
+                        DownloadingOrExtractingFailed(this, args);
 
                     break;
             }
@@ -496,7 +614,7 @@ namespace wyDay.Controls
 
         static UpdateStepOn UpdateStepToUpdateStepOn(UpdateStep us)
         {
-            switch (us)
+            switch(us)
             {
                 case UpdateStep.BeginExtraction:
                     return UpdateStepOn.ExtractingUpdate;
@@ -508,6 +626,101 @@ namespace wyDay.Controls
                     throw new Exception("UpdateStep not supported");
             }
         }
+
+        void SetUpdateStepOn(UpdateStepOn uso)
+        {
+            UpdateStepOn = uso;
+        }
+
+
+        //TODO: if any function is called before Initialize is called, throw an exception
+
+        /// <summary>
+        /// The intialize function must be called before you can use any other functions.
+        /// </summary>
+        public void Initialize()
+        {
+            // read settings file for last check time
+            AutoUpdaterInfo = new AutoUpdaterInfo(m_GUID, null);
+
+            // see if update is pending, if so force install
+            if (AutoUpdaterInfo.UpdateStepOn == UpdateStepOn.UpdateReadyToInstall)
+            {
+                //TODO: test funky non-compliant state file
+
+                // then KillSelf&StartUpdater
+                ClosingForInstall = true;
+
+                // start the updater
+                InstallPendingUpdate();
+            }
+        }
+
+        /// <summary>
+        /// The function that must be called when your app has loaded.
+        /// </summary>
+        public void AppLoaded()
+        {
+            // if we want to kill ourself, then don't bother checking for updates
+            if (ClosingForInstall)
+                return;
+
+            // get the current update step from the 
+            m_UpdateStepOn = AutoUpdaterInfo.UpdateStepOn;
+
+            if (UpdateStepOn != UpdateStepOn.Nothing)
+            {
+                version = AutoUpdaterInfo.UpdateVersion;
+                changes = AutoUpdaterInfo.ChangesInLatestVersion;
+                changesAreRTF = AutoUpdaterInfo.ChangesIsRTF;
+
+                switch (UpdateStepOn)
+                {
+                    case UpdateStepOn.UpdateAvailable:
+                        UpdateReady();
+                        break;
+
+                    case UpdateStepOn.UpdateReadyToInstall:
+                        UpdateReadyToInstall();
+                        break;
+
+                    case UpdateStepOn.UpdateDownloaded:
+
+                        // begin extraction
+                        if (internalUpdateType == UpdateType.Automatic)
+                            ExtractUpdate();
+                        else
+                            UpdateReadyToExtract();
+                        break;
+                }
+            }
+            else
+            {
+                switch (AutoUpdaterInfo.AutoUpdaterStatus)
+                {
+                    case AutoUpdaterStatus.UpdateSucceeded:
+
+                        // set the version & changes
+                        version = AutoUpdaterInfo.UpdateVersion;
+                        changes = AutoUpdaterInfo.ChangesInLatestVersion;
+                        changesAreRTF = AutoUpdaterInfo.ChangesIsRTF;
+
+                        if (UpdateSuccessful != null)
+                            UpdateSuccessful(this, new SuccessArgs { Version = version });
+
+                        break;
+                    case AutoUpdaterStatus.UpdateFailed:
+
+                        if (UpdateFailed != null)
+                            UpdateFailed(this, new FailArgs { ErrorTitle = AutoUpdaterInfo.ErrorTitle, ErrorMessage = AutoUpdaterInfo.ErrorMessage });
+
+                        break;
+                }
+
+                // clear the changes and resave
+                AutoUpdaterInfo.ClearSuccessError();
+                AutoUpdaterInfo.Save();
+            }
+        }
     }
 }
-*/

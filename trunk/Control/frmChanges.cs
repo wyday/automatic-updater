@@ -10,7 +10,7 @@ namespace wyDay.Controls
     {
         public bool UpdateNow { get; private set; }
 
-        public frmChanges(string version, string changes, bool isRTF, List<RichTextBoxLink> links, bool showUpdateNow, AUTranslation translation)
+        public frmChanges(string version, string changes, bool isRTF, bool showUpdateNow, AUTranslation translation)
         {
             Font = SystemFonts.MessageBoxFont;
 
@@ -20,8 +20,6 @@ namespace wyDay.Controls
                 richChanges.Rtf = changes;
             else
                 richChanges.Text = changes;
-
-            richChanges.CreateExistingLinks(links);
 
             Text = lblTitle.Text = translation.ChangesInVersion.Replace("%version%", version);
             lblTitle.Text += ":";
