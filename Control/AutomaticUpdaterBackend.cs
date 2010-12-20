@@ -244,6 +244,9 @@ namespace wyDay.Controls
         /// </summary>
         public void InstallNow()
         {
+            if (AutoUpdaterInfo == null)
+                throw new FailedToInitizalizeException();
+
             // throw an exception when trying to Install when no update is ready
 
             if (UpdateStepOn == UpdateStepOn.Nothing)
@@ -283,6 +286,9 @@ namespace wyDay.Controls
         /// </summary>
         public void Cancel()
         {
+            if (AutoUpdaterInfo == null)
+                throw new FailedToInitizalizeException();
+
             updateHelper.Cancel();
 
             SetLastSuccessfulStep();
@@ -306,6 +312,9 @@ namespace wyDay.Controls
         /// <returns>Returns true if checking has begun, false otherwise.</returns>
         public bool ForceCheckForUpdate(bool recheck)
         {
+            if (AutoUpdaterInfo == null)
+                throw new FailedToInitizalizeException();
+
             // if not already checking for updates then begin checking.
             if (recheck || UpdateStepOn == UpdateStepOn.Nothing)
             {
@@ -322,7 +331,7 @@ namespace wyDay.Controls
                 }
 
                 // show the working animation
-                SetUpdateStepOn(UpdateStepOn.Checking);
+                UpdateStepOn = UpdateStepOn.Checking;
 
                 if (recheck)
                     updateHelper.ForceRecheckForUpdate();
@@ -366,14 +375,14 @@ namespace wyDay.Controls
 
             // if the control is hidden show it now (so the user can cancel the downloading if they want)
             // show the 'working' animation
-            SetUpdateStepOn(UpdateStepOn.DownloadingUpdate);
+            UpdateStepOn = UpdateStepOn.DownloadingUpdate;
 
             updateHelper.DownloadUpdate();
         }
 
         void ExtractUpdate()
         {
-            SetUpdateStepOn(UpdateStepOn.ExtractingUpdate);
+            UpdateStepOn = UpdateStepOn.ExtractingUpdate;
 
             // extract the update
             updateHelper.BeginExtraction();
@@ -393,13 +402,13 @@ namespace wyDay.Controls
                 switch (updateHelper.UpdateStep)
                 {
                     case UpdateStep.CheckForUpdate:
-                        SetUpdateStepOn(UpdateStepOn.Checking);
+                        UpdateStepOn = UpdateStepOn.Checking;
                         break;
                     case UpdateStep.DownloadUpdate:
-                        SetUpdateStepOn(UpdateStepOn.DownloadingUpdate);
+                        UpdateStepOn = UpdateStepOn.DownloadingUpdate;
                         break;
                     case UpdateStep.BeginExtraction:
-                        SetUpdateStepOn(UpdateStepOn.ExtractingUpdate);
+                        UpdateStepOn = UpdateStepOn.ExtractingUpdate;
                         break;
                 }
             }
@@ -555,7 +564,7 @@ namespace wyDay.Controls
 
         void UpdateReady()
         {
-            SetUpdateStepOn(UpdateStepOn.UpdateAvailable);
+            UpdateStepOn = UpdateStepOn.UpdateAvailable;
 
             if (UpdateAvailable != null)
                 UpdateAvailable(this, EventArgs.Empty);
@@ -563,7 +572,7 @@ namespace wyDay.Controls
 
         void UpdateReadyToExtract()
         {
-            SetUpdateStepOn(UpdateStepOn.UpdateDownloaded);
+            UpdateStepOn = UpdateStepOn.UpdateDownloaded;
 
             if (ReadyToBeInstalled != null)
                 ReadyToBeInstalled(this, EventArgs.Empty);
@@ -571,7 +580,7 @@ namespace wyDay.Controls
 
         void UpdateReadyToInstall()
         {
-            SetUpdateStepOn(UpdateStepOn.UpdateReadyToInstall);
+            UpdateStepOn = UpdateStepOn.UpdateReadyToInstall;
 
             if (ReadyToBeInstalled != null)
                 ReadyToBeInstalled(this, EventArgs.Empty);
@@ -627,13 +636,6 @@ namespace wyDay.Controls
             }
         }
 
-        void SetUpdateStepOn(UpdateStepOn uso)
-        {
-            UpdateStepOn = uso;
-        }
-
-
-        //TODO: if any function is called before Initialize is called, throw an exception
 
         /// <summary>
         /// The intialize function must be called before you can use any other functions.
@@ -661,6 +663,9 @@ namespace wyDay.Controls
         /// </summary>
         public void AppLoaded()
         {
+            if (AutoUpdaterInfo == null)
+                throw new FailedToInitizalizeException();
+
             // if we want to kill ourself, then don't bother checking for updates
             if (ClosingForInstall)
                 return;
@@ -721,6 +726,20 @@ namespace wyDay.Controls
                 AutoUpdaterInfo.ClearSuccessError();
                 AutoUpdaterInfo.Save();
             }
+        }
+    }
+
+    /// <summary>
+    /// The fail to Initizale exception.
+    /// </summary>
+    public class FailedToInitizalizeException : Exception
+    {
+        /// <summary>
+        /// The fail to Initizale exception.
+        /// </summary>
+        public FailedToInitizalizeException()
+            : base("You must call the Initizalize() function before you can use any other functions.")
+        {
         }
     }
 }
