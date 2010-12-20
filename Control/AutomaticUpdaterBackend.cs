@@ -245,7 +245,7 @@ namespace wyDay.Controls
         public void InstallNow()
         {
             if (AutoUpdaterInfo == null)
-                throw new FailedToInitizalizeException();
+                throw new FailedToInitializeException();
 
             // throw an exception when trying to Install when no update is ready
 
@@ -287,7 +287,7 @@ namespace wyDay.Controls
         public void Cancel()
         {
             if (AutoUpdaterInfo == null)
-                throw new FailedToInitizalizeException();
+                throw new FailedToInitializeException();
 
             updateHelper.Cancel();
 
@@ -313,7 +313,7 @@ namespace wyDay.Controls
         public bool ForceCheckForUpdate(bool recheck)
         {
             if (AutoUpdaterInfo == null)
-                throw new FailedToInitizalizeException();
+                throw new FailedToInitializeException();
 
             // if not already checking for updates then begin checking.
             if (recheck || UpdateStepOn == UpdateStepOn.Nothing)
@@ -664,7 +664,7 @@ namespace wyDay.Controls
         public void AppLoaded()
         {
             if (AutoUpdaterInfo == null)
-                throw new FailedToInitizalizeException();
+                throw new FailedToInitializeException();
 
             // if we want to kill ourself, then don't bother checking for updates
             if (ClosingForInstall)
@@ -730,15 +730,15 @@ namespace wyDay.Controls
     }
 
     /// <summary>
-    /// The fail to Initizale exception.
+    /// The fail to Initialize exception.
     /// </summary>
-    public class FailedToInitizalizeException : Exception
+    public class FailedToInitializeException : Exception
     {
         /// <summary>
-        /// The fail to Initizale exception.
+        /// The fail to Initialize exception.
         /// </summary>
-        public FailedToInitizalizeException()
-            : base("You must call the Initizalize() function before you can use any other functions.")
+        public FailedToInitializeException()
+            : base("You must call the Initialize() function before you can use any other functions.")
         {
         }
     }
