@@ -39,6 +39,11 @@ namespace wyDay.Controls
         public event BeforeHandler BeforeDownloading;
 
         /// <summary>
+        /// Event is raised before the extracting of the update begins.
+        /// </summary>
+        public event BeforeHandler BeforeExtracting;
+
+        /// <summary>
         /// Event is raised when checking or updating is cancelled.
         /// </summary>
         public event EventHandler Cancelled;
@@ -390,6 +395,18 @@ namespace wyDay.Controls
 
         void ExtractUpdate()
         {
+            BeforeArgs bArgs = new BeforeArgs();
+
+            if (BeforeExtracting != null)
+                BeforeExtracting(this, bArgs);
+
+            if (bArgs.Cancel)
+            {
+                // close wyUpdate
+                updateHelper.Cancel();
+                return;
+            }
+
             UpdateStepOn = UpdateStepOn.ExtractingUpdate;
 
             // extract the update
