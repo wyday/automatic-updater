@@ -116,6 +116,16 @@ namespace wyDay.Controls
         }
 
         /// <summary>
+        /// Gets the changes for the new update. It may be in RTF or TXT format. Use AreChangesRTF.
+        /// </summary>
+        public string RawChanges { get { return changes; } }
+
+        /// <summary>
+        /// Is the RawChanges RTF or text.
+        /// </summary>
+        public bool AreChangesRTF { get { return changesAreRTF; } }
+
+        /// <summary>
         /// Gets if this AutomaticUpdater has hidden this form and preparing to install an update.
         /// </summary>
         public bool ClosingForInstall { get; private set; }
