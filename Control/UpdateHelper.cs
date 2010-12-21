@@ -57,6 +57,8 @@ namespace wyDay.Controls
 
         public UpdateHelper()
         {
+            m_CompleteWULoc = Path.IsPathRooted(m_wyUpdateLocation) ? m_wyUpdateLocation : Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), m_wyUpdateLocation);
+
             CreateNewPipeClient();
 
             bw.DoWork += bw_DoWork;
