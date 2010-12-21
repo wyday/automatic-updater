@@ -56,6 +56,9 @@
       <Link>AutomaticUpdater.cs</Link>
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="..\Control\AutomaticUpdaterBackend.cs">
+      <Link>AutomaticUpdaterBackend.cs</Link>
+    </Compile>
     <Compile Include="..\Control\AutoUpdaterInfo.cs">
       <Link>AutoUpdaterInfo.cs</Link>
     </Compile>
