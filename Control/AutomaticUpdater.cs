@@ -1,11 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.Design;
 using System.Drawing;
 using System.Drawing.Design;
 using System.Drawing.Drawing2D;
-using System.IO;
 using System.Windows.Forms;
 using wyUpdate.Common;
 
@@ -26,22 +24,13 @@ namespace wyDay.Controls
     [ToolboxBitmapAttribute(typeof(AutomaticUpdater), "update-notify.png")]
     public class AutomaticUpdater : ContainerControl, ISupportInitialize
     {
-        AutoUpdaterInfo AutoUpdaterInfo;
+        readonly AutomaticUpdaterBackend auBackend = new AutomaticUpdaterBackend();
 
         Form ownerForm;
 
         readonly AnimationControl ani = new AnimationControl();
 
         Rectangle textRect;
-
-        UpdateHelper updateHelper;
-        string m_wyUpdateLocation = "wyUpdate.exe";
-
-        string m_wyUpdateCommandline;
-
-        UpdateType internalUpdateType = UpdateType.Automatic;
-        UpdateType m_UpdateType = UpdateType.Automatic;
-
 
         readonly Timer tmrCollapse = new Timer { Interval = 3000 };
         readonly Timer tmrAniExpandCollapse = new Timer { Interval = 30 };
@@ -51,25 +40,17 @@ namespace wyDay.Controls
 
         int m_DaysBetweenChecks = 12;
 
-
+        FailArgs failArgs;
 
         ContextMenu contextMenu;
         MenuType CurrMenuType = MenuType.Nothing;
         bool isMenuVisible;
 
         // changes
-        string version, changes;
-        bool changesAreRTF;
-        List<RichTextBoxLink> changesLinks;
         bool ShowButtonUpdateNow;
 
         string currentActionText;
 
-
-        // error
-        string errorTitle, errorMessage;
-
-        bool RestartInfoSent;
 
         // menu items
         ToolStripItem toolStripItem;
@@ -188,26 +169,13 @@ namespace wyDay.Controls
         /// Gets the changes for the new update.
         /// </summary>
         [Browsable(false)]
-        public string Changes
-        {
-            get
-            {
-                if (!changesAreRTF)
-                    return changes;
-
-                // convert the RTF text to plaintext
-                using (RichTextBox r = new RichTextBox {Rtf = changes})
-                {
-                    return r.Text;
-                }
-            }
-        }
+        public string Changes { get { return auBackend.Changes; } }
 
         /// <summary>
         /// Gets if this AutomaticUpdater has hidden this form and preparing to install an update.
         /// </summary>
         [Browsable(false)]
-        public bool ClosingForInstall { get; private set; }
+        public bool ClosingForInstall { get { return auBackend.ClosingForInstall; } }
 
         /// <summary>
         /// Gets or sets the number of days to wait before automatically re-checking for updates.
@@ -221,8 +189,6 @@ namespace wyDay.Controls
             set { m_DaysBetweenChecks = value; }
         }
 
-        string m_GUID;
-
         /// <summary>
         /// Gets the GUID (Globally Unique ID) of the automatic updater. It is recommended you set this value (especially if there is more than one exe for your product).
         /// </summary>
@@ -234,29 +200,16 @@ namespace wyDay.Controls
         EditorBrowsable(EditorBrowsableState.Never)]
         public string GUID
         {
-            get { return m_GUID; }
+            get { return auBackend.GUID; }
             set
             {
-                // disallow setting after AutoUpdaterInfo is not null
-                if (AutoUpdaterInfo != null)
-                    throw new Exception("You must set the GUID at Design time.");
-
-                if (DesignMode)
-                {
-                    if (value.IndexOfAny(Path.GetInvalidFileNameChars()) != -1)
-                    {
-                        // there are bad filename characters
-                        throw new Exception("The GUID cannot contain invalid filename characters.");
-                    }
-                }
-
-                m_GUID = value;
+                auBackend.GUID = value;
             }
         }
 
         bool ShouldSerializeGUID()
         {
-            return !string.IsNullOrEmpty(m_GUID);
+            return !string.IsNullOrEmpty(auBackend.GUID);
         }
 
         /// <summary>
@@ -273,7 +226,7 @@ namespace wyDay.Controls
         [Browsable(false)]
         public DateTime LastCheckDate
         {
-            get { return AutoUpdaterInfo.LastCheckedForUpdate; }
+            get { return auBackend.LastCheckDate; }
         }
 
         /// <summary>
@@ -345,8 +298,6 @@ namespace wyDay.Controls
 
         bool ShouldSerializeTranslation() { return false; }
 
-        UpdateStepOn m_UpdateStepOn;
-
         /// <summary>
         /// Gets the update step the AutomaticUpdater is currently on.
         /// </summary>
@@ -355,23 +306,7 @@ namespace wyDay.Controls
         {
             get
             {
-                return m_UpdateStepOn;
-            }
-            private set
-            {
-                m_UpdateStepOn = value;
-
-                // set the AutoUpdaterInfo property
-                if (value != UpdateStepOn.Checking
-                    && value != UpdateStepOn.DownloadingUpdate
-                    && value != UpdateStepOn.ExtractingUpdate)
-                {
-                    if (value == UpdateStepOn.Nothing)
-                        AutoUpdaterInfo.ClearSuccessError();
-
-                    AutoUpdaterInfo.UpdateStepOn = value;
-                    AutoUpdaterInfo.Save();
-                }
+                return auBackend.UpdateStepOn;
             }
         }
 
@@ -383,11 +318,10 @@ namespace wyDay.Controls
         Category("Updater")]
         public UpdateType UpdateType
         {
-            get { return m_UpdateType; }
+            get { return auBackend.UpdateType; }
             set
             {
-                m_UpdateType = value;
-                internalUpdateType = value;
+                auBackend.UpdateType = value;
             }
         }
 
@@ -399,7 +333,7 @@ namespace wyDay.Controls
         {
             get
             {
-                return version;
+                return auBackend.Version;
             }
         }
 
@@ -427,14 +361,8 @@ namespace wyDay.Controls
         Category("Updater")]
         public string wyUpdateCommandline
         {
-            get { return m_wyUpdateCommandline; }
-            set
-            {
-                m_wyUpdateCommandline = value;
-
-                if (updateHelper != null)
-                    updateHelper.ExtraArguments = m_wyUpdateCommandline;
-            }
+            get { return auBackend.wyUpdateCommandline; }
+            set { auBackend.wyUpdateCommandline = value; }
         }
 
         /// <summary>
@@ -445,23 +373,8 @@ namespace wyDay.Controls
         Category("Updater")]
         public string wyUpdateLocation
         {
-            get { return m_wyUpdateLocation; }
-            set 
-            {
-                m_wyUpdateLocation = value;
-
-                if (updateHelper != null)
-                    updateHelper.wyUpdateLocation = GetFullWyUpdateLocation();
-            }
-        }
-
-        string GetFullWyUpdateLocation()
-        {
-            //if the client path is a relative path, then return the full path relative to this executing program
-            if (!Path.IsPathRooted(m_wyUpdateLocation))
-                return Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), m_wyUpdateLocation);
-            
-            return m_wyUpdateLocation;
+            get { return auBackend.wyUpdateLocation; }
+            set { auBackend.wyUpdateLocation = value; }
         }
 
         [Bindable(false), EditorBrowsable(EditorBrowsableState.Never), Browsable(false)]
@@ -542,11 +455,27 @@ namespace wyDay.Controls
             tmrAniExpandCollapse.Tick += tmrAniExpandCollapse_Tick;
             tmrWaitBeforeCheck.Tick += tmrWaitBeforeCheck_Tick;
 
-            Application.ApplicationExit += Application_ApplicationExit;
-
             Size = new Size(16, 16);
 
             backBrush = new SolidBrush(BackColor);
+
+            // use all events from the AutomaticUpdater backend
+            auBackend.BeforeChecking += auBackend_BeforeChecking;
+            auBackend.BeforeDownloading += auBackend_BeforeDownloading;
+            auBackend.BeforeExtracting += auBackend_BeforeExtracting;
+            auBackend.Cancelled += auBackend_Cancelled;
+            auBackend.ReadyToBeInstalled += auBackend_ReadyToBeInstalled;
+            auBackend.UpdateAvailable += auBackend_UpdateAvailable;
+            auBackend.UpdateSuccessful += auBackend_UpdateSuccessful;
+            auBackend.UpToDate += auBackend_UpToDate;
+
+            auBackend.ProgressChanged += auBackend_ProgressChanged;
+
+            auBackend.CheckingFailed += auBackend_CheckingFailed;
+            auBackend.DownloadingOrExtractingFailed += auBackend_DownloadingOrExtractingFailed;
+            auBackend.UpdateFailed += auBackend_UpdateFailed;
+
+            auBackend.ClosingAborted += auBackend_ClosingAborted;
         }
 
         /// <summary>
@@ -557,20 +486,325 @@ namespace wyDay.Controls
             : this()
         {
             ownerForm = parentControl;
-
             ownerForm.Load += ownerForm_Load;
-
-            updateHelper = new UpdateHelper(ownerForm)
-                               {
-                                   wyUpdateLocation = GetFullWyUpdateLocation(),
-                                   ExtraArguments = wyUpdateCommandline
-                               };
-
-            updateHelper.ProgressChanged += updateHelper_ProgressChanged;
-            updateHelper.PipeServerDisconnected += updateHelper_PipeServerDisconnected;
-            updateHelper.UpdateStepMismatch += updateHelper_UpdateStepMismatch;
         }
 
+        void auBackend_UpToDate(object sender, SuccessArgs e)
+        {
+            // call this function from ownerForm's thread context
+            if (sender != null)
+            {
+                ownerForm.Invoke(new SuccessHandler(auBackend_UpToDate), new object[] { null, e });
+                return;
+            }
+
+            Text = translation.AlreadyUpToDate;
+
+            if (Visible)
+                UpdateStepSuccessful(MenuType.AlreadyUpToDate);
+
+            SetMenuText(translation.CheckForUpdatesMenu);
+
+            if (UpToDate != null)
+                UpToDate(this, e);
+        }
+
+        void auBackend_UpdateSuccessful(object sender, SuccessArgs e)
+        {
+            // call this function from ownerForm's thread context
+            if (sender != null)
+            {
+                ownerForm.Invoke(new SuccessHandler(auBackend_UpdateSuccessful), new object[] { null, e });
+                return;
+            }
+
+            // show the control
+            Visible = !KeepHidden;
+
+            Text = translation.SuccessfullyUpdated.Replace("%version%", Version);
+            UpdateStepSuccessful(MenuType.UpdateSuccessful);
+
+            if (UpdateSuccessful != null)
+                UpdateSuccessful(this, e);
+        }
+
+        void auBackend_UpdateFailed(object sender, FailArgs e)
+        {
+            // call this function from ownerForm's thread context
+            if (sender != null)
+            {
+                ownerForm.Invoke(new FailHandler(auBackend_UpdateFailed), new object[] { null, e });
+                return;
+            }
+
+            // show the control
+            Visible = !KeepHidden;
+
+            failArgs = e;
+
+            // show failed Text & icon
+            Text = translation.UpdateFailed;
+            CreateMenu(MenuType.Error);
+            AnimateImage(BmpFailed, true);
+
+            if (UpdateFailed != null)
+                UpdateFailed(this, e);
+        }
+
+        void auBackend_UpdateAvailable(object sender, EventArgs e)
+        {
+            // call this function from ownerForm's thread context
+            if (sender != null)
+            {
+                ownerForm.Invoke(new EventHandler(auBackend_UpdateAvailable), new object[] { null, e });
+                return;
+            }
+
+            CreateMenu(MenuType.DownloadAndChanges);
+
+            SetUpdateStepOn(UpdateStepOn.UpdateAvailable);
+
+            if (!KeepHidden)
+                Show();
+
+            // temporarily disable the collapse timer
+            tmrCollapse.Enabled = false;
+
+            // animate this open
+            BeginAniOpen();
+
+            AnimateImage(BmpNotify, true);
+
+            SetMenuText(translation.DownloadUpdateMenu);
+
+            if (UpdateAvailable != null)
+                UpdateAvailable(this, e);
+        }
+
+        void auBackend_ReadyToBeInstalled(object sender, EventArgs e)
+        {
+            // call this function from ownerForm's thread context
+            if (sender != null)
+            {
+                ownerForm.Invoke(new EventHandler(auBackend_ReadyToBeInstalled), new object[] { null, e });
+                return;
+            }
+
+            CreateMenu(MenuType.InstallAndChanges);
+
+            if (auBackend.UpdateStepOn == wyDay.Controls.UpdateStepOn.UpdateDownloaded)
+            {
+                SetUpdateStepOn(UpdateStepOn.UpdateDownloaded);
+            }
+            else // update extracted (UpdateReadyToInstall)
+            {
+                SetUpdateStepOn(UpdateStepOn.UpdateReadyToInstall);
+            }
+
+            if (!KeepHidden)
+                Show();
+
+            // temporarily disable the collapse timer
+            tmrCollapse.Enabled = false;
+
+            // animate this open
+            BeginAniOpen();
+
+            AnimateImage(BmpInfo, true);
+
+            SetMenuText(translation.InstallUpdateMenu);
+
+
+            if (ReadyToBeInstalled != null)
+                ReadyToBeInstalled(this, e);
+        }
+
+        void auBackend_Cancelled(object sender, EventArgs e)
+        {
+            // call this function from ownerForm's thread context
+            if (sender != null)
+            {
+                ownerForm.Invoke(new EventHandler(auBackend_Cancelled), new object[] { null, e });
+                return;
+            }
+
+            // stop animation & hide
+            ani.StopAnimation();
+            Visible = false;
+
+            SetMenuText(translation.CheckForUpdatesMenu);
+
+            if (Cancelled != null)
+                Cancelled(this, e);
+        }
+
+        void auBackend_BeforeChecking(object sender, BeforeArgs e)
+        {
+            // call this function from ownerForm's thread context
+            if (sender != null)
+            {
+                ownerForm.Invoke(new BeforeHandler(auBackend_BeforeChecking), new object[] { null, e });
+                return;
+            }
+
+            //TODO: implement
+
+            // disable any scheduled checking
+            tmrWaitBeforeCheck.Enabled = false;
+
+            SetMenuText(translation.CancelCheckingMenu);
+
+            if (BeforeChecking != null)
+                BeforeChecking(this, e);
+
+            if (e.Cancel)
+            {
+                // close wyUpdate
+                auBackend.Cancel();
+                return;
+            }
+
+            // show the working animation
+            SetUpdateStepOn(UpdateStepOn.Checking);
+            UpdateProcessing(false);
+
+            // setup the context menu
+            CreateMenu(MenuType.CheckingMenu);
+        }
+
+        void auBackend_BeforeDownloading(object sender, BeforeArgs e)
+        {
+            // call this function from ownerForm's thread context
+            if (sender != null)
+            {
+                ownerForm.Invoke(new BeforeHandler(auBackend_BeforeDownloading), new object[] { null, e });
+                return;
+            }
+
+            if (BeforeDownloading != null)
+                BeforeDownloading(this, e);
+
+            if (e.Cancel)
+                return;
+
+            SetMenuText(translation.CancelUpdatingMenu);
+
+            // if the control is hidden show it now (so the user can cancel the downloading if they want)
+            // show the 'working' animation
+            SetUpdateStepOn(UpdateStepOn.DownloadingUpdate);
+            UpdateProcessing(true);
+
+            CreateMenu(MenuType.CancelDownloading);
+        }
+
+        void auBackend_BeforeExtracting(object sender, BeforeArgs e)
+        {
+            // call this function from ownerForm's thread context
+            if (sender != null)
+            {
+                ownerForm.Invoke(new BeforeHandler(auBackend_BeforeExtracting), new object[] { null, e });
+                return;
+            }
+
+            SetUpdateStepOn(UpdateStepOn.ExtractingUpdate);
+
+            CreateMenu(MenuType.CancelExtracting);
+        }
+
+        void auBackend_CheckingFailed(object sender, FailArgs e)
+        {
+            // call this function from ownerForm's thread context
+            if (sender != null)
+            {
+                ownerForm.Invoke(new FailHandler(auBackend_CheckingFailed), new object[] { null, e });
+                return;
+            }
+
+            UpdateStepFailed(e);
+
+            Text = translation.FailedToCheck;
+
+            if (CheckingFailed != null)
+                CheckingFailed(this, e);
+        }
+
+        void auBackend_DownloadingOrExtractingFailed(object sender, FailArgs e)
+        {
+            // call this function from ownerForm's thread context
+            if (sender != null)
+            {
+                ownerForm.Invoke(new FailHandler(auBackend_DownloadingOrExtractingFailed), new object[] { null, e });
+                return;
+            }
+
+            UpdateStepFailed(e);
+
+            //TODO: use "Text = translation.FailedToDownload;" on download failure
+
+            Text = translation.FailedToExtract;
+
+            if (DownloadingOrExtractingFailed != null)
+                DownloadingOrExtractingFailed(this, e);
+        }
+
+        void UpdateStepFailed(FailArgs e)
+        {
+            if (e.wyUpdatePrematureExit)
+            {
+                e.ErrorTitle = translation.PrematureExitTitle;
+                e.ErrorMessage = translation.PrematureExitMessage;
+            }
+
+            failArgs = e;
+
+            //only show the error if this is visible
+            if (Visible)
+            {
+                CreateMenu(MenuType.Error);
+                AnimateImage(BmpFailed, true);
+            }
+
+            SetMenuText(translation.CheckForUpdatesMenu);
+        }
+
+
+        void auBackend_ProgressChanged(object sender, int progress)
+        {
+            // call this function from ownerForm's thread context
+            if (sender != null)
+            {
+                ownerForm.Invoke(new UpdateProgressChanged(auBackend_ProgressChanged), new object[] { null, progress });
+                return;
+            }
+
+            // update progress status (only for greater than 0%)
+            if (progress > 0)
+                Text = currentActionText + ", " + progress + "%";
+
+            // call the progress changed event
+            if (ProgressChanged != null)
+                ProgressChanged(this, progress);
+        }
+
+        void auBackend_ClosingAborted(object sender, EventArgs e)
+        {
+            // call this function from ownerForm's thread context
+            if (sender != null)
+            {
+                ownerForm.Invoke(new EventHandler(auBackend_ClosingAborted), new object[] { null, e });
+                return;
+            }
+
+            // we need to show the form (it was hidden in ISupport() )
+            if (auBackend.ClosingForInstall)
+            {
+                ownerForm.ShowInTaskbar = true;
+                ownerForm.WindowState = FormWindowState.Normal;
+            }
+
+            if (ClosingAborted != null)
+                ClosingAborted(this, EventArgs.Empty);
+        }
 
 
         /// <summary>
@@ -582,30 +816,12 @@ namespace wyDay.Controls
             get { return ownerForm; }
             set
             {
-                if (updateHelper != null)
-                {
-                    updateHelper.ProgressChanged -= updateHelper_ProgressChanged;
-                    updateHelper.PipeServerDisconnected -= updateHelper_PipeServerDisconnected;
-                    updateHelper.UpdateStepMismatch -= updateHelper_UpdateStepMismatch;
-                }
-                    
-
-                if (ownerForm == value)
+                if (ownerForm != null)
                     ownerForm.Load -= ownerForm_Load;
 
                 ownerForm = value;
 
                 ownerForm.Load += ownerForm_Load;
-
-                updateHelper = new UpdateHelper(ownerForm)
-                                   {
-                                       wyUpdateLocation = GetFullWyUpdateLocation(),
-                                       ExtraArguments = wyUpdateCommandline
-                                   };
-
-                updateHelper.ProgressChanged += updateHelper_ProgressChanged;
-                updateHelper.PipeServerDisconnected += updateHelper_PipeServerDisconnected;
-                updateHelper.UpdateStepMismatch += updateHelper_UpdateStepMismatch;
             }
         }
 
@@ -844,38 +1060,7 @@ namespace wyDay.Controls
         /// </summary>
         public void InstallNow()
         {
-            // throw an exception when trying to Install when no update is ready
-
-            if (UpdateStepOn == UpdateStepOn.Nothing)
-                throw new Exception("There must be an update available before you can install it.");
-            
-            if (UpdateStepOn == UpdateStepOn.Checking)
-                throw new Exception(
-                    "The AutomaticUpdater must finish checking for updates before they can be installed.");
-
-            if (UpdateStepOn == UpdateStepOn.DownloadingUpdate)
-                throw new Exception("The update must be downloaded before you can install it.");
-
-            if (UpdateStepOn == UpdateStepOn.ExtractingUpdate)
-                throw new Exception("The update must finish extracting before you can install it.");
-
-            // set the internal update type to autmatic so the user won't be prompted anymore
-            internalUpdateType = UpdateType.Automatic;
-
-            if (UpdateStepOn == UpdateStepOn.UpdateAvailable)
-            {
-                // begin downloading the update
-                DownloadUpdate();
-            }
-            else if (UpdateStepOn == UpdateStepOn.UpdateDownloaded)
-            {
-                ExtractUpdate();
-            }
-            else // UpdateReadyToInstall
-            {
-                // begin installing the update
-                InstallPendingUpdate();
-            }
+            auBackend.InstallNow();
         }
 
         void CancelUpdate_Click(object sender, EventArgs e)
@@ -893,31 +1078,12 @@ namespace wyDay.Controls
         /// </summary>
         public void Cancel()
         {
-            // stop animation & hide
-            ani.StopAnimation();
-            Visible = false;
-
-            updateHelper.Cancel();
-
-            SetLastSuccessfulStep();
-
-            SetMenuText(translation.CheckForUpdatesMenu);
-
-            if (Cancelled != null)
-                Cancelled(this, EventArgs.Empty);
-        }
-
-        void SetLastSuccessfulStep()
-        {
-            if (UpdateStepOn == UpdateStepOn.Checking)
-                UpdateStepOn = UpdateStepOn.Nothing;
-            else
-                UpdateStepOn = UpdateStepOn.UpdateAvailable;
+            auBackend.Cancel();
         }
 
         void ViewChanges_Click(object sender, EventArgs e)
         {
-            frmChanges changeForm = new frmChanges(version, changes, changesAreRTF, changesLinks, ShowButtonUpdateNow, translation);
+            frmChanges changeForm = new frmChanges(Version, auBackend.RawChanges, auBackend.AreChangesRTF, ShowButtonUpdateNow, translation);
             changeForm.ShowDialog(ownerForm);
 
             if (changeForm.UpdateNow)
@@ -926,7 +1092,7 @@ namespace wyDay.Controls
 
         void ViewError_Click(object sender, EventArgs e)
         {
-            frmError errorForm = new frmError(errorTitle, errorMessage, translation);
+            frmError errorForm = new frmError(failArgs, translation);
             errorForm.ShowDialog(ownerForm);
 
             if (errorForm.TryAgainLater)
@@ -1014,7 +1180,7 @@ namespace wyDay.Controls
                     contextMenu = new ContextMenu(new[]
                                 { 
                                     new MenuItem(NewMenuType == MenuType.InstallAndChanges ? translation.InstallUpdateMenu : translation.DownloadUpdateMenu, InstallNow_Click), 
-                                    new MenuItem(translation.ViewChangesMenu.Replace("%version%", version), ViewChanges_Click)
+                                    new MenuItem(translation.ViewChangesMenu.Replace("%version%", Version), ViewChanges_Click)
                                 });
                     contextMenu.MenuItems[0].DefaultItem = true;
                     ShowButtonUpdateNow = true;
@@ -1037,7 +1203,7 @@ namespace wyDay.Controls
                     contextMenu = new ContextMenu(new[]
                                 {
                                     new MenuItem(translation.HideMenu, Hide_Click),
-                                    new MenuItem(translation.ViewChangesMenu.Replace("%version%", version), ViewChanges_Click)
+                                    new MenuItem(translation.ViewChangesMenu.Replace("%version%", Version), ViewChanges_Click)
                                 });
 
                     ShowButtonUpdateNow = false;
@@ -1059,41 +1225,8 @@ namespace wyDay.Controls
 
         void tmrWaitBeforeCheck_Tick(object sender, EventArgs e)
         {
-            forceCheck(false, sender == null);
+            auBackend.ForceCheckForUpdate(false);
         }
-
-        void forceCheck(bool recheck, bool forceShow)
-        {
-            // disable any scheduled checking
-            tmrWaitBeforeCheck.Enabled = false;
-
-            BeforeArgs bArgs = new BeforeArgs();
-
-            SetMenuText(translation.CancelCheckingMenu);
-
-            if (BeforeChecking != null)
-                BeforeChecking(this, bArgs);
-
-            if (bArgs.Cancel)
-            {
-                // close wyUpdate
-                updateHelper.Cancel();
-                return;
-            }
-
-            // show the working animation
-            SetUpdateStepOn(UpdateStepOn.Checking);
-            UpdateProcessing(forceShow);
-
-            // setup the context menu
-            CreateMenu(MenuType.CheckingMenu);
-
-            if (recheck)
-                updateHelper.ForceRecheckForUpdate();
-            else
-                updateHelper.CheckForUpdate();
-        }
-
 
         /// <summary>
         /// Check for updates forcefully.
@@ -1105,7 +1238,8 @@ namespace wyDay.Controls
             // if not already checking for updates then begin checking.
             if (recheck || UpdateStepOn == UpdateStepOn.Nothing)
             {
-                forceCheck(recheck, true);
+                Visible = true;
+                auBackend.ForceCheckForUpdate(recheck);
                 return true;
             }
 
@@ -1121,64 +1255,11 @@ namespace wyDay.Controls
             return ForceCheckForUpdate(false);
         }
 
-        void InstallPendingUpdate()
-        {
-            // send the client the arguments that need to run on success and failure
-            updateHelper.RestartInfo(Application.ExecutablePath, AutoUpdaterInfo.AutoUpdateID, Arguments);
-        }
+        //TODO: handle update step mismatch
 
-        void DownloadUpdate()
-        {
-            BeforeArgs bArgs = new BeforeArgs();
-
-            SetMenuText(translation.CancelUpdatingMenu);
-
-            if (BeforeDownloading != null)
-                BeforeDownloading(this, bArgs);
-
-            if (bArgs.Cancel)
-            {
-                // close wyUpdate
-                updateHelper.Cancel();
-                return;
-            }
-
-            // if the control is hidden show it now (so the user can cancel the downloading if they want)
-            // show the 'working' animation
-            SetUpdateStepOn(UpdateStepOn.DownloadingUpdate);
-            UpdateProcessing(true);
-
-            CreateMenu(MenuType.CancelDownloading);
-
-            updateHelper.DownloadUpdate();
-        }
-
-        void ExtractUpdate()
-        {
-            SetUpdateStepOn(UpdateStepOn.ExtractingUpdate);
-
-            CreateMenu(MenuType.CancelExtracting);
-
-            // extract the update
-            updateHelper.BeginExtraction();
-        }
-
+        /*
         void updateHelper_UpdateStepMismatch(object sender, Response respType, UpdateStep previousStep)
         {
-            // we can't install right now
-            if (previousStep == UpdateStep.RestartInfo)
-            {
-                // we need to show the form (it was hidden in ISupport() )
-                if (ClosingForInstall)
-                {
-                    ownerForm.ShowInTaskbar = true;
-                    ownerForm.WindowState = FormWindowState.Normal;
-                }
-
-                if (ClosingAborted != null)
-                    ClosingAborted(this, EventArgs.Empty);
-            }
-
             if (respType == Response.Progress)
             {
                 switch (updateHelper.UpdateStep)
@@ -1198,170 +1279,7 @@ namespace wyDay.Controls
                 UpdateProcessing(false);
             }
         }
-
-        void updateHelper_PipeServerDisconnected(object sender, EventArgs e)
-        {
-            // the client should only ever exit after success or failure
-            // otherwise it is a premature exit (and needs to be treated as an error)
-            if (UpdateStepOn == UpdateStepOn.Checking
-                || UpdateStepOn == UpdateStepOn.DownloadingUpdate
-                || UpdateStepOn == UpdateStepOn.ExtractingUpdate)
-            {
-                errorTitle = translation.PrematureExitTitle;
-                errorMessage = translation.PrematureExitMessage;
-
-                UpdateStepFailed(UpdateStepOn);
-            }
-        }
-
-        void updateHelper_ProgressChanged(object sender, UpdateHelperData e)
-        {
-            switch (e.ResponseType)
-            {
-                case Response.Failed:
-
-                    errorTitle = e.ExtraData[0];
-                    errorMessage = e.ExtraData[1];
-
-                    // show the error icon & menu
-                    // and set last successful step
-                    UpdateStepFailed(
-                        UpdateStepToUpdateStepOn(e.UpdateStep)
-                        );
-                    
-                    break;
-                case Response.Succeeded:
-
-
-                    switch (e.UpdateStep)
-                    {
-                        case UpdateStep.CheckForUpdate:
-
-                            AutoUpdaterInfo.LastCheckedForUpdate = DateTime.Now;
-
-                            // there's an update available
-                            if (e.ExtraData.Count != 0)
-                            {
-                                version = e.ExtraData[0];
-                                changes = e.ExtraData[1];
-                                changesAreRTF = e.ExtraDataIsRTF[1];
-                                changesLinks = e.LinksData;
-
-                                // save the changes to the AutoUpdateInfo file
-                                AutoUpdaterInfo.UpdateVersion = version;
-                                AutoUpdaterInfo.ChangesInLatestVersion = changes;
-                                AutoUpdaterInfo.ChangesIsRTF = changesAreRTF;
-                            }
-                            else
-                            {
-                                // Clear saved version details for cases where we're
-                                // continuing an update (the version details filled
-                                // in from the AutoUpdaterInfo file) however,
-                                // wyUpdate reports your app has since been updated.
-                                // Thus we need to clear the saved info.
-                                version = null;
-                                changes = null;
-                                changesAreRTF = false;
-                                changesLinks = null;
-
-                                AutoUpdaterInfo.ClearSuccessError();
-                            }
-
-                            break;
-                        case UpdateStep.DownloadUpdate:
-
-                            UpdateStepOn = UpdateStepOn.UpdateDownloaded;
-
-                            break;
-                        case UpdateStep.RestartInfo:
-
-                            RestartInfoSent = true;
-
-                            // close this application so it can be updated
-                            Application.Exit();
-
-                            break;
-                    }
-
-                    StartNextStep(e.UpdateStep);
-
-                    break;
-                case Response.Progress:
-
-                    // update progress status (only for greater than 0%)
-                    
-                    if (e.Progress > 0)
-                        Text = currentActionText + ", " + e.Progress + "%";
-
-                    // call the progress changed event
-                    if (ProgressChanged != null)
-                        ProgressChanged(this, e.Progress);
-
-                    break;
-            }
-        }
-
-        void Application_ApplicationExit(object sender, EventArgs e)
-        {
-            if (RestartInfoSent)
-            {
-                // show client & send the "begin update" message
-                updateHelper.InstallNow();
-            }
-        }
-
-        void StartNextStep(UpdateStep updateStepOn)
-        {
-            // begin the next step
-            switch (updateStepOn)
-            {
-                case UpdateStep.CheckForUpdate:
-
-
-                    if (!string.IsNullOrEmpty(version))
-                    {
-                        // there's an update available
-                        
-
-                        if (internalUpdateType == UpdateType.CheckAndDownload
-                            || internalUpdateType == UpdateType.Automatic)
-                        {
-                            UpdateStepOn = UpdateStepOn.UpdateAvailable;
-
-                            // begin downloading the update
-                            DownloadUpdate();
-                        }
-                        else
-                        {
-                            // show the update ready mark
-                            UpdateReady();
-                        }
-                    }
-                    else //no update
-                    {
-                        // tell the user they're using the latest version
-                        AlreadyUpToDate();
-                    }
-
-                    break;
-                case UpdateStep.DownloadUpdate:
-
-                    // begin extraction
-                    if (internalUpdateType == UpdateType.Automatic)
-                        ExtractUpdate();
-                    else
-                        UpdateReadyToExtract();
-
-                    break;
-                case UpdateStep.BeginExtraction:
-
-                    // inform the user that the update is ready to be installed
-                    UpdateReadyToInstall();
-
-                    break;
-            }
-        }
-
+        */
 
         void RefreshTextRect()
         {
@@ -1388,7 +1306,6 @@ namespace wyDay.Controls
             textRect.Y = 8 - textRect.Height / 2 - 1;
         }
 
-
         protected override void OnFontChanged(EventArgs e)
         {
             RefreshTextRect();
@@ -1396,75 +1313,6 @@ namespace wyDay.Controls
             Height = Math.Max(16, Font.Height);
 
             base.OnFontChanged(e);
-        }
-
-        void UpdateReady()
-        {
-            CreateMenu(MenuType.DownloadAndChanges);
-
-            SetUpdateStepOn(UpdateStepOn.UpdateAvailable);
-
-            if (!KeepHidden)
-                Show();
-
-            // temporarily disable the collapse timer
-            tmrCollapse.Enabled = false;
-
-            // animate this open
-            BeginAniOpen();
-
-            AnimateImage(BmpNotify, true);
-
-            SetMenuText(translation.DownloadUpdateMenu);
-
-            if (UpdateAvailable != null)
-                UpdateAvailable(this, EventArgs.Empty);
-        }
-
-        void UpdateReadyToExtract()
-        {
-            CreateMenu(MenuType.InstallAndChanges);
-
-            SetUpdateStepOn(UpdateStepOn.UpdateDownloaded);
-
-            if (!KeepHidden)
-                Show();
-
-            // temporarily disable the collapse timer
-            tmrCollapse.Enabled = false;
-
-            // animate this open
-            BeginAniOpen();
-
-            AnimateImage(BmpInfo, true);
-
-            SetMenuText(translation.InstallUpdateMenu);
-
-            if (ReadyToBeInstalled != null)
-                ReadyToBeInstalled(this, EventArgs.Empty);
-        }
-
-        void UpdateReadyToInstall()
-        {
-            CreateMenu(MenuType.InstallAndChanges);
-
-            SetUpdateStepOn(UpdateStepOn.UpdateReadyToInstall);
-
-            if (!KeepHidden)
-                Show();
-
-            // temporarily disable the collapse timer
-            tmrCollapse.Enabled = false;
-
-            // animate this open
-            BeginAniOpen();
-
-            AnimateImage(BmpInfo, true);
-
-            SetMenuText(translation.InstallUpdateMenu);
-
-            if (ReadyToBeInstalled != null)
-                ReadyToBeInstalled(this, EventArgs.Empty);
         }
 
         void UpdateStepSuccessful(MenuType menuType)
@@ -1479,81 +1327,6 @@ namespace wyDay.Controls
             BeginAniOpen();
 
             AnimateImage(BmpSuccess, true);
-        }
-
-        void AlreadyUpToDate()
-        {
-            UpdateStepOn = UpdateStepOn.Nothing;
-
-            Text = translation.AlreadyUpToDate;
-
-            if (Visible)
-                UpdateStepSuccessful(MenuType.AlreadyUpToDate);
-
-            SetMenuText(translation.CheckForUpdatesMenu);
-
-            if (UpToDate != null)
-                UpToDate(this, new SuccessArgs { Version = version });
-        }
-
-        void UpdateStepFailed(UpdateStepOn us)
-        {
-            //only show the error if this is visible
-            if (Visible)
-            {
-                CreateMenu(MenuType.Error);
-
-                AnimateImage(BmpFailed, true);
-            }
-
-            SetLastSuccessfulStep();
-
-            FailArgs failArgs = new FailArgs {ErrorTitle = errorTitle, ErrorMessage = errorMessage};
-
-            SetMenuText(translation.CheckForUpdatesMenu);
-
-            switch (us)
-            {
-                case UpdateStepOn.Checking:
-
-                    Text = translation.FailedToCheck;
-
-                    if (CheckingFailed != null)
-                        CheckingFailed(this, failArgs);
-
-                    break;
-                case UpdateStepOn.DownloadingUpdate:
-
-                    Text = translation.FailedToDownload;
-
-                    if (DownloadingOrExtractingFailed != null)
-                        DownloadingOrExtractingFailed(this, failArgs);
-
-                    break;
-                case UpdateStepOn.ExtractingUpdate:
-
-                    Text = translation.FailedToExtract;
-
-                    if (DownloadingOrExtractingFailed != null)
-                        DownloadingOrExtractingFailed(this, failArgs);
-
-                    break;
-            }
-        }
-
-        static UpdateStepOn UpdateStepToUpdateStepOn(UpdateStep us)
-        {
-            switch(us)
-            {
-                case UpdateStep.BeginExtraction:
-                    return UpdateStepOn.ExtractingUpdate;
-                case UpdateStep.CheckForUpdate:
-                    return UpdateStepOn.Checking;
-                case UpdateStep.DownloadUpdate:
-                    return UpdateStepOn.DownloadingUpdate;
-                default:
-                    throw new Exception("UpdateStep not supported");
-            }
         }
 
         void UpdateProcessing(bool forceShow)
@@ -1579,10 +1352,10 @@ namespace wyDay.Controls
             ani.StartAnimation();
         }
 
+
+        //TODO: test when 'UpdateAvailable' and 'InstallOnNextStart' are shown
         void SetUpdateStepOn(UpdateStepOn uso)
         {
-            UpdateStepOn = uso;
-
             switch(uso)
             {
                 case UpdateStepOn.Checking:
@@ -1602,10 +1375,11 @@ namespace wyDay.Controls
                     break;
 
                 case UpdateStepOn.UpdateDownloaded:
+                    Text = translation.UpdateAvailable;
+                    break;
+
                 case UpdateStepOn.UpdateReadyToInstall:
-                    Text = internalUpdateType == UpdateType.CheckAndDownload
-                        ? translation.UpdateAvailable
-                        : translation.InstallOnNextStart;
+                    Text = translation.InstallOnNextStart;
                     break;
             }
         }
@@ -1651,23 +1425,13 @@ namespace wyDay.Controls
             if (DesignMode)
                 return;
 
-            // read settings file for last check time
-            AutoUpdaterInfo = new AutoUpdaterInfo(m_GUID, null);
+            auBackend.Initialize();
 
-            // see if update is pending, if so force install
-            if (AutoUpdaterInfo.UpdateStepOn == UpdateStepOn.UpdateReadyToInstall)
+            if (auBackend.ClosingForInstall)
             {
-                //TODO: test funky non-compliant state file
-
                 // hide self if there's an update pending
                 ownerForm.ShowInTaskbar = false;
                 ownerForm.WindowState = FormWindowState.Minimized;
-
-                // then KillSelf&StartUpdater
-                ClosingForInstall = true;
-
-                // start the updater
-                InstallPendingUpdate();
             }
         }
 
@@ -1676,91 +1440,22 @@ namespace wyDay.Controls
             SetMenuText(translation.CheckForUpdatesMenu);
 
             // if we want to kill ouself, then don't bother checking for updates
-            if (ClosingForInstall)
+            if (auBackend.ClosingForInstall)
                 return;
 
-            // get the current update step from the 
-            m_UpdateStepOn = AutoUpdaterInfo.UpdateStepOn;
+            auBackend.AppLoaded();
 
             if (UpdateStepOn != UpdateStepOn.Nothing)
             {
-                version = AutoUpdaterInfo.UpdateVersion;
-                changes = AutoUpdaterInfo.ChangesInLatestVersion;
-                changesAreRTF = AutoUpdaterInfo.ChangesIsRTF;
-
-                switch (UpdateStepOn)
-                {
-                    case UpdateStepOn.UpdateAvailable:
-                        UpdateReady();
-                        break;
-
-                    case UpdateStepOn.UpdateReadyToInstall:
-                        UpdateReadyToInstall();
-                        break;
-
-                    case UpdateStepOn.UpdateDownloaded:
-
-                        // show the updater control
-                        if (!KeepHidden)
-                            Show();
-
-                        // begin extraction
-                        if (internalUpdateType == UpdateType.Automatic)
-                            ExtractUpdate();
-                        else
-                            UpdateReadyToExtract();
-                        break;
-                }
+                // show the updater control
+                if (!KeepHidden)
+                    Show();
             }
-            else if (AutoUpdaterInfo.AutoUpdaterStatus == AutoUpdaterStatus.UpdateSucceeded)
-            {
-                // show the control
-                Visible = !KeepHidden;
 
-                // set the version & changes
-                version = AutoUpdaterInfo.UpdateVersion;
-                changes = AutoUpdaterInfo.ChangesInLatestVersion;
-                changesAreRTF = AutoUpdaterInfo.ChangesIsRTF;
-
-                // clear the changes and resave
-                AutoUpdaterInfo.ClearSuccessError();
-                AutoUpdaterInfo.Save();
-
-
-                Text = translation.SuccessfullyUpdated.Replace("%version%", version);
-                UpdateStepSuccessful(MenuType.UpdateSuccessful);
-
-                if (UpdateSuccessful != null)
-                    UpdateSuccessful(this, new SuccessArgs { Version = version });
-            }
-            else if (AutoUpdaterInfo.AutoUpdaterStatus == AutoUpdaterStatus.UpdateFailed)
-            {
-                // show the control
-                Visible = !KeepHidden;
-
-                // fill the errorTitle & errorMessage
-                errorTitle = AutoUpdaterInfo.ErrorTitle;
-                errorMessage = AutoUpdaterInfo.ErrorMessage;
-
-                // clear the error and resave
-                AutoUpdaterInfo.ClearSuccessError();
-                AutoUpdaterInfo.Save();
-
-                // show failed Text & icon
-                Text = translation.UpdateFailed;
-                CreateMenu(MenuType.Error);
-                AnimateImage(BmpFailed, true);
-
-                if (UpdateFailed != null)
-                    UpdateFailed(this, new FailArgs { ErrorTitle = errorTitle, ErrorMessage = errorMessage });
-            }
-            else
-                Visible = false;
-
-            if (m_UpdateType != UpdateType.DoNothing)
+            if (auBackend.UpdateType != UpdateType.DoNothing)
             {
                 // see if enough days have elapsed since last check.
-                TimeSpan span = DateTime.Now.Subtract(AutoUpdaterInfo.LastCheckedForUpdate);
+                TimeSpan span = DateTime.Now.Subtract(auBackend.LastCheckDate);
 
                 if (span.Days >= m_DaysBetweenChecks)
                 {
