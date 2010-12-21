@@ -472,7 +472,8 @@ namespace wyDay.Controls
             auBackend.ProgressChanged += auBackend_ProgressChanged;
 
             auBackend.CheckingFailed += auBackend_CheckingFailed;
-            auBackend.DownloadingOrExtractingFailed += auBackend_DownloadingOrExtractingFailed;
+            auBackend.DownloadingFailed += auBackend_DownloadingFailed;
+            auBackend.ExtractingFailed += auBackend_ExtractingFailed;
             auBackend.UpdateFailed += auBackend_UpdateFailed;
 
             auBackend.ClosingAborted += auBackend_ClosingAborted;
@@ -647,8 +648,6 @@ namespace wyDay.Controls
                 return;
             }
 
-            //TODO: implement
-
             // disable any scheduled checking
             tmrWaitBeforeCheck.Enabled = false;
 
@@ -728,18 +727,33 @@ namespace wyDay.Controls
                 CheckingFailed(this, e);
         }
 
-        void auBackend_DownloadingOrExtractingFailed(object sender, FailArgs e)
+        void auBackend_DownloadingFailed(object sender, FailArgs e)
         {
             // call this function from ownerForm's thread context
             if (sender != null)
             {
-                ownerForm.Invoke(new FailHandler(auBackend_DownloadingOrExtractingFailed), new object[] { null, e });
+                ownerForm.Invoke(new FailHandler(auBackend_DownloadingFailed), new object[] { null, e });
                 return;
             }
 
             UpdateStepFailed(e);
 
-            //TODO: use "Text = translation.FailedToDownload;" on download failure
+            Text = translation.FailedToDownload;
+
+            if (DownloadingOrExtractingFailed != null)
+                DownloadingOrExtractingFailed(this, e);
+        }
+
+        void auBackend_ExtractingFailed(object sender, FailArgs e)
+        {
+            // call this function from ownerForm's thread context
+            if (sender != null)
+            {
+                ownerForm.Invoke(new FailHandler(auBackend_ExtractingFailed), new object[] { null, e });
+                return;
+            }
+
+            UpdateStepFailed(e);
 
             Text = translation.FailedToExtract;
 
