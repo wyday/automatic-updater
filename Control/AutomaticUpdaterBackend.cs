@@ -250,7 +250,11 @@ namespace wyDay.Controls
         /// </summary>
         public AutomaticUpdaterBackend()
         {
+#if WPF
+            System.Windows.Application.Current.Exit += Application_ApplicationExit;
+#else
             Application.ApplicationExit += Application_ApplicationExit;
+#endif
 
             updateHelper.ProgressChanged += updateHelper_ProgressChanged;
             updateHelper.PipeServerDisconnected += updateHelper_PipeServerDisconnected;
@@ -513,6 +517,10 @@ namespace wyDay.Controls
 
                             RestartInfoSent = true;
 
+#if WPF
+                            // close this application so it can be updated
+                            System.Windows.Application.Current.Shutdown();
+#else
                             // close this application so it can be updated
                             if (Application.MessageLoop)
                             {
@@ -521,9 +529,13 @@ namespace wyDay.Controls
                             }
                             else
                             {
+                                // show client & send the "begin update" message
+                                updateHelper.InstallNow();
+
                                 // Use this since we are a console app (or Windows service)
                                 Environment.Exit(0);
                             }
+#endif
 
                             break;
                     }
