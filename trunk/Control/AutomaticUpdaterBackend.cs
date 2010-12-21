@@ -59,9 +59,14 @@ namespace wyDay.Controls
         public event EventHandler ClosingAborted;
 
         /// <summary>
-        /// Event is raised when the update fails to download or extract.
+        /// Event is raised when the update fails to download.
         /// </summary>
-        public event FailHandler DownloadingOrExtractingFailed;
+        public event FailHandler DownloadingFailed;
+
+        /// <summary>
+        /// Event is raised when the update fails to extract.
+        /// </summary>
+        public event FailHandler ExtractingFailed;
 
         /// <summary>
         /// Event is raised when the current update step progress changes.
@@ -633,14 +638,14 @@ namespace wyDay.Controls
                     break;
                 case UpdateStepOn.DownloadingUpdate:
 
-                    if (DownloadingOrExtractingFailed != null)
-                        DownloadingOrExtractingFailed(this, args);
+                    if (DownloadingFailed != null)
+                        DownloadingFailed(this, args);
 
                     break;
                 case UpdateStepOn.ExtractingUpdate:
 
-                    if (DownloadingOrExtractingFailed != null)
-                        DownloadingOrExtractingFailed(this, args);
+                    if (ExtractingFailed != null)
+                        ExtractingFailed(this, args);
 
                     break;
             }
