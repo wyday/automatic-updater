@@ -65,7 +65,6 @@
             this.richChanges.Size = new System.Drawing.Size(315, 184);
             this.richChanges.TabIndex = 1;
             this.richChanges.Text = "";
-            this.richChanges.LinkClicked += new wyDay.Controls.LinkHandler(this.richChanges_LinkClicked);
             // 
             // btnUpdateNow
             // 
