@@ -514,7 +514,16 @@ namespace wyDay.Controls
                             RestartInfoSent = true;
 
                             // close this application so it can be updated
-                            Application.Exit();
+                            if (Application.MessageLoop)
+                            {
+                                // Use this since we are a WinForms app
+                                Application.Exit();
+                            }
+                            else
+                            {
+                                // Use this since we are a console app (or Windows service)
+                                Environment.Exit(0);
+                            }
 
                             break;
                     }
