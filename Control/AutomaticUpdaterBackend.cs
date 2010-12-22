@@ -733,7 +733,11 @@ namespace wyDay.Controls
                 switch (UpdateStepOn)
                 {
                     case UpdateStepOn.UpdateAvailable:
-                        UpdateReady();
+                        if (internalUpdateType == UpdateType.CheckAndDownload || internalUpdateType == UpdateType.Automatic)
+                            DownloadUpdate(); // begin downloading the update
+                        else
+                            UpdateReady();
+
                         break;
 
                     case UpdateStepOn.UpdateReadyToInstall:
@@ -742,11 +746,11 @@ namespace wyDay.Controls
 
                     case UpdateStepOn.UpdateDownloaded:
 
-                        // begin extraction
                         if (internalUpdateType == UpdateType.Automatic)
-                            ExtractUpdate();
+                            ExtractUpdate(); // begin extraction
                         else
                             UpdateReadyToExtract();
+
                         break;
                 }
             }
