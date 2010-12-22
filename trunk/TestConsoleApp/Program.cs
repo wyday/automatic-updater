@@ -26,6 +26,8 @@ namespace TestConsoleApp
             auBackend.Initialize();
             auBackend.AppLoaded();
 
+            //TODO: only ForceCheckForUpdate() every N days!
+            // You don't want to recheck for updates on every app start.
             if (auBackend.UpdateStepOn == UpdateStepOn.Nothing)
                 auBackend.ForceCheckForUpdate();
 
