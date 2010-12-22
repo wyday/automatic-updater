@@ -13,6 +13,7 @@ namespace TestConsoleApp
         {
             auBackend = new AutomaticUpdaterBackend
                             {
+                                //TODO: set a unique string. For instance, "appname-companyname"
                                 GUID = "a-string-that-uniquely-IDs-you-app",
                                 UpdateType = UpdateType.Automatic
                             };
@@ -48,7 +49,7 @@ namespace TestConsoleApp
             {
                 //TODO: delay the installation of the update until it's appropriate for your app.
 
-                // do any "spin-down" operations. auBackend.InstallNow() will exit this process, so run any cleanup functions now.
+                //TODO: do any "spin-down" operations. auBackend.InstallNow() will exit this process, so run any cleanup functions now.
 
                 // here we'll just close immediately to install the new version
                 auBackend.InstallNow();
