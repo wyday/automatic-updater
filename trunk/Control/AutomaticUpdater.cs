@@ -201,10 +201,7 @@ namespace wyDay.Controls
         public string GUID
         {
             get { return auBackend.GUID; }
-            set
-            {
-                auBackend.GUID = value;
-            }
+            set { auBackend.GUID = value; }
         }
 
         bool ShouldSerializeGUID()
@@ -302,13 +299,7 @@ namespace wyDay.Controls
         /// Gets the update step the AutomaticUpdater is currently on.
         /// </summary>
         [Browsable(false)]
-        public UpdateStepOn UpdateStepOn
-        {
-            get
-            {
-                return auBackend.UpdateStepOn;
-            }
-        }
+        public UpdateStepOn UpdateStepOn { get { return auBackend.UpdateStepOn; } }
 
         /// <summary>
         /// Gets or sets how much this AutomaticUpdater control should do without user interaction.
@@ -319,23 +310,14 @@ namespace wyDay.Controls
         public UpdateType UpdateType
         {
             get { return auBackend.UpdateType; }
-            set
-            {
-                auBackend.UpdateType = value;
-            }
+            set { auBackend.UpdateType = value; }
         }
 
         /// <summary>
         /// Gets the version of the new update.
         /// </summary>
         [Browsable(false)]
-        public string Version
-        {
-            get
-            {
-                return auBackend.Version;
-            }
-        }
+        public string Version { get { return auBackend.Version; } }
 
         /// <summary>
         /// Gets or sets the seconds to wait after the form is loaded before checking for updates.
@@ -593,14 +575,8 @@ namespace wyDay.Controls
 
             CreateMenu(MenuType.InstallAndChanges);
 
-            if (auBackend.UpdateStepOn == wyDay.Controls.UpdateStepOn.UpdateDownloaded)
-            {
-                SetUpdateStepOn(UpdateStepOn.UpdateDownloaded);
-            }
-            else // update extracted (UpdateReadyToInstall)
-            {
-                SetUpdateStepOn(UpdateStepOn.UpdateReadyToInstall);
-            }
+            // UpdateDownloaded or UpdateReadyToInstall
+            SetUpdateStepOn(auBackend.UpdateStepOn);
 
             if (!KeepHidden)
                 Show();
@@ -780,7 +756,6 @@ namespace wyDay.Controls
 
             SetMenuText(translation.CheckForUpdatesMenu);
         }
-
 
         void auBackend_ProgressChanged(object sender, int progress)
         {
@@ -1097,7 +1072,7 @@ namespace wyDay.Controls
 
         void ViewChanges_Click(object sender, EventArgs e)
         {
-            frmChanges changeForm = new frmChanges(Version, auBackend.RawChanges, auBackend.AreChangesRTF, ShowButtonUpdateNow, translation);
+            frmChanges changeForm = new frmChanges(auBackend.Version, auBackend.RawChanges, auBackend.AreChangesRTF, ShowButtonUpdateNow, translation);
             changeForm.ShowDialog(ownerForm);
 
             if (changeForm.UpdateNow)
