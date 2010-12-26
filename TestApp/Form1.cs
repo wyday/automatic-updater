@@ -20,15 +20,11 @@ namespace TestApp
                 LoadStuff();
             }
 
-            //automaticUpdater.ForceCheckForUpdate();
-
             // print out the passed arguments
             foreach (var s in args)
             {
                 textBox1.Text += s + "\r\n";
             }
-            
-            //automaticUpdater.Font = new Font(Font, FontStyle.Bold);
         }
 
         void LoadStuff()
@@ -43,37 +39,9 @@ namespace TestApp
             LoadStuff();
         }
 
-
-        private void automaticUpdater_UpdateFailed(object sender, FailArgs e)
-        {
-            // an update failed to install
-        }
-
-        private void automaticUpdater_UpdateSuccessful(object sender, SuccessArgs e)
-        {
-            // an update has been successfully been installed
-        }
-
-
-
-        private void Form1_Shown(object sender, EventArgs e)
-        {
-
-        }
-
         private void button1_Click(object sender, EventArgs e)
         {
             automaticUpdater.ForceCheckForUpdate(true);
-        }
-
-        private void automaticUpdater_UpdateAvailable(object sender, EventArgs e)
-        {
-
-        }
-
-        private void automaticUpdater_CheckingFailed(object sender, FailArgs e)
-        {
-
         }
     }
 }

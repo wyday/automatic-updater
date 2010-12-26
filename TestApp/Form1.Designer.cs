@@ -132,19 +132,17 @@
             this.automaticUpdater.Name = "automaticUpdater";
             this.automaticUpdater.Size = new System.Drawing.Size(16, 16);
             this.automaticUpdater.TabIndex = 3;
-            this.automaticUpdater.UpdateType = wyDay.Controls.UpdateType.CheckAndDownload;
+            this.automaticUpdater.UpdateType = wyDay.Controls.UpdateType.DoNothing;
             this.automaticUpdater.wyUpdateCommandline = resources.GetString("automaticUpdater.wyUpdateCommandline");
-            this.automaticUpdater.CheckingFailed += new wyDay.Controls.FailHandler(this.automaticUpdater_CheckingFailed);
+            this.automaticUpdater.wyUpdateLocation = "C:\\Users\\Wyatt\\Documents\\Visual Studio 2005\\Projects\\wyUpdate\\wyUpdate Tests\\Oock" +
+                "le\\wyUpdate.exe";
             this.automaticUpdater.ClosingAborted += new System.EventHandler(this.automaticUpdater_ClosingAborted);
-            this.automaticUpdater.UpdateAvailable += new System.EventHandler(this.automaticUpdater_UpdateAvailable);
-            this.automaticUpdater.UpdateFailed += new wyDay.Controls.FailHandler(this.automaticUpdater_UpdateFailed);
-            this.automaticUpdater.UpdateSuccessful += new wyDay.Controls.SuccessHandler(this.automaticUpdater_UpdateSuccessful);
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(395, 163);
+            this.ClientSize = new System.Drawing.Size(395, 173);
             this.Controls.Add(this.textBox1);
             this.Controls.Add(this.automaticUpdater);
             this.Controls.Add(this.lblVersion);
@@ -154,7 +152,6 @@
             this.Name = "Form1";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "YourApp";
-            this.Shown += new System.EventHandler(this.Form1_Shown);
             this.contextMenuStrip1.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.automaticUpdater)).EndInit();
             this.ResumeLayout(false);
