@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Drawing;
 using System.Windows.Forms;
-using wyDay.Controls;
 
 namespace TestApp
 {
