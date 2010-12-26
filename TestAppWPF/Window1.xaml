@@ -12,6 +12,6 @@
                 <MenuItem Header="About" />
             </MenuItem>
         </Menu>
-        <my:AutomaticUpdater Height="69" HorizontalAlignment="Left" Margin="12,27,0,0" Name="automaticUpdater2" VerticalAlignment="Top" Width="73" GUID="yourcompany-yourapp" />
+        <my:AutomaticUpdater HorizontalAlignment="Left" Margin="38,59,0,0" Name="automaticUpdater2" VerticalAlignment="Top" GUID="yourcompany-yourapp" />
     </Grid>
 </Window>
