@@ -243,6 +243,11 @@ namespace wyDay.Controls
             set { updateHelper.wyUpdateLocation = value; }
         }
 
+        /// <summary>
+        /// Gets or sets the service to start after the update.
+        /// </summary>
+        public string ServiceName { get; set; }
+
         #endregion
 
         /// <summary>
@@ -378,7 +383,7 @@ namespace wyDay.Controls
         void InstallPendingUpdate()
         {
             // send the client the arguments that need to run on success and failure
-            updateHelper.RestartInfo(Application.ExecutablePath, AutoUpdaterInfo.AutoUpdateID, Arguments);
+            updateHelper.RestartInfo(ServiceName ?? Application.ExecutablePath, AutoUpdaterInfo.AutoUpdateID, Arguments, ServiceName != null);
         }
 
         void DownloadUpdate()
@@ -422,6 +427,7 @@ namespace wyDay.Controls
             updateHelper.BeginExtraction();
         }
 
+        //TODO: call an event for the UI versions of the AutomaticUpdater
         void updateHelper_UpdateStepMismatch(object sender, Response respType, UpdateStep previousStep)
         {
             // we can't install right now
@@ -611,7 +617,6 @@ namespace wyDay.Controls
                     break;
             }
         }
-
 
         void UpdateReady()
         {

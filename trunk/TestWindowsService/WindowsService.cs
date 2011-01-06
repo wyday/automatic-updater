@@ -1,5 +1,8 @@
+using System;
 using System.Diagnostics;
 using System.ServiceProcess;
+using System.Threading;
+using wyDay.Controls;
 
 namespace WindowsService
 {
@@ -50,6 +53,9 @@ namespace WindowsService
             Debugger.Break();
         }
 
+        static AutomaticUpdaterBackend auBackend;
+        static readonly ManualResetEvent resetEvent = new ManualResetEvent(false);
+
         /// <summary>
         /// OnStart: Put startup code here
         ///  - Start threads, get inital data, etc.
@@ -61,9 +67,51 @@ namespace WindowsService
             //      to this process.
             DebugMode();
 
-            //TODO: add the AutomaticUpdater code
+            auBackend = new AutomaticUpdaterBackend
+                            {
+                                //TODO: set a unique string. For instance, "appname-companyname"
+                                GUID = "a-string-that-uniquely-IDs-your-service",
+                                UpdateType = UpdateType.Automatic,
+                                ServiceName = ServiceName
+                            };
 
+            auBackend.ReadyToBeInstalled += auBackend_ReadyToBeInstalled;
+            auBackend.UpdateSuccessful += auBackend_UpdateSuccessful;
+
+            //TODO: use the failed events for loggin (CheckingFailed, DownloadingFailed, ExtractingFailed, UpdateFailed)
+
+            // the function to be called after all events have been set.
+            auBackend.Initialize();
+            auBackend.AppLoaded();
+
+            //TODO: only ForceCheckForUpdate() every N days!
+            // You don't want to recheck for updates on every app start.
+            if (auBackend.UpdateStepOn == UpdateStepOn.Nothing)
+                auBackend.ForceCheckForUpdate();
+
+            // Blocks until "resetEvent.Set()" on another thread
+            resetEvent.WaitOne();
             base.OnStart(args);
+        }
+
+        static void auBackend_UpdateSuccessful(object sender, SuccessArgs e)
+        {
+            Console.WriteLine("Successfully updated to version " + e.Version);
+            Console.WriteLine("Changes: ");
+            Console.WriteLine(auBackend.Changes);
+        }
+
+        static void auBackend_ReadyToBeInstalled(object sender, EventArgs e)
+        {
+            if (auBackend.UpdateStepOn == UpdateStepOn.UpdateReadyToInstall)
+            {
+                //TODO: delay the installation of the update until it's appropriate for your app.
+
+                //TODO: do any "spin-down" operations. auBackend.InstallNow() will exit this process, so run any cleanup functions now.
+
+                // here we'll just close immediately to install the new version
+                auBackend.InstallNow();
+            }
         }
 
         /// <summary>

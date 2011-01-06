@@ -247,12 +247,12 @@ namespace wyDay.Controls
             SendAsync(new UpdateHelperData(UpdateStep.BeginExtraction));
         }
 
-        public void RestartInfo(string fileToExecute, string autoUpdateID, string argumentsForFiles)
+        public void RestartInfo(string fileToExecute, string autoUpdateID, string argumentsForFiles, bool isAService)
         {
             UpdateHelperData uhd = new UpdateHelperData(UpdateStep.RestartInfo);
 
             uhd.ExtraData.Add(fileToExecute);
-            uhd.ExtraDataIsRTF.Add(false);
+            uhd.ExtraDataIsRTF.Add(isAService);
 
             if (!string.IsNullOrEmpty(autoUpdateID))
             {
