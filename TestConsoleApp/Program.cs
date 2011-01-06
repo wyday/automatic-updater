@@ -15,13 +15,17 @@ namespace TestConsoleApp
                             {
                                 //TODO: set a unique string. For instance, "appname-companyname"
                                 GUID = "a-string-that-uniquely-IDs-your-app",
+
+                                // With UpdateType set to Automatic, you're still in charge of
+                                // checking for updates, but the AutomaticUpdaterBackend
+                                // continues with the downloading and extracting automatically.
                                 UpdateType = UpdateType.Automatic
                             };
 
             auBackend.ReadyToBeInstalled += auBackend_ReadyToBeInstalled;
             auBackend.UpdateSuccessful += auBackend_UpdateSuccessful;
 
-            //TODO: use the failed events for loggin (CheckingFailed, DownloadingFailed, ExtractingFailed, UpdateFailed)
+            //TODO: use the failed events for logging (CheckingFailed, DownloadingFailed, ExtractingFailed, UpdateFailed)
 
             // the function to be called after all events have been set.
             auBackend.Initialize();
@@ -29,7 +33,7 @@ namespace TestConsoleApp
 
             //TODO: only ForceCheckForUpdate() every N days!
             // You don't want to recheck for updates on every app start.
-            if (auBackend.UpdateStepOn == UpdateStepOn.Nothing)
+            if (auBackend.UpdateStepOn == UpdateStepOn.Nothing /* && lastCheckWasNDaysAgo */)
                 auBackend.ForceCheckForUpdate();
 
             // Blocks until "resetEvent.Set()" on another thread
