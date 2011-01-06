@@ -14,7 +14,7 @@ namespace TestConsoleApp
             auBackend = new AutomaticUpdaterBackend
                             {
                                 //TODO: set a unique string. For instance, "appname-companyname"
-                                GUID = "a-string-that-uniquely-IDs-you-app",
+                                GUID = "a-string-that-uniquely-IDs-your-app",
                                 UpdateType = UpdateType.Automatic
                             };
 
