@@ -98,6 +98,11 @@ namespace wyDay.Controls
         /// </summary>
         public event SuccessHandler UpToDate;
 
+        /// <summary>
+        /// Event is raised when the update step that is supposed to be processed isn't the step that's processed.
+        /// </summary>
+        public event EventHandler UpdateStepMismatch;
+
         #endregion Events
 
         #region Properties
@@ -427,7 +432,6 @@ namespace wyDay.Controls
             updateHelper.BeginExtraction();
         }
 
-        //TODO: call an event for the UI versions of the AutomaticUpdater
         void updateHelper_UpdateStepMismatch(object sender, Response respType, UpdateStep previousStep)
         {
             // we can't install right now
@@ -452,6 +456,9 @@ namespace wyDay.Controls
                         break;
                 }
             }
+
+            if (UpdateStepMismatch != null)
+                UpdateStepMismatch(this, EventArgs.Empty);
         }
 
         void updateHelper_PipeServerDisconnected(object sender, EventArgs e)

@@ -479,6 +479,7 @@ namespace wyDay.Controls
             auBackend.UpdateFailed += auBackend_UpdateFailed;
 
             auBackend.ClosingAborted += auBackend_ClosingAborted;
+            auBackend.UpdateStepMismatch += auBackend_UpdateStepMismatch;
         }
 
         void auBackend_UpToDate(object sender, SuccessArgs e)
@@ -804,7 +805,25 @@ namespace wyDay.Controls
                 ClosingAborted(this, EventArgs.Empty);
         }
 
+        void auBackend_UpdateStepMismatch(object sender, EventArgs e)
+        {
+            // call this function from ownerForm's thread context
+            if (sender != null)
+            {
+                ownerForm.Dispatcher.Invoke(DispatcherPriority.Normal, new EventHandler(auBackend_UpdateStepMismatch), new object[] { null, e });
+                return;
+            }
 
+            SetUpdateStepOn(auBackend.UpdateStepOn);
+
+            // set the working progress animation
+            if (auBackend.UpdateStepOn == UpdateStepOn.Checking
+                || auBackend.UpdateStepOn == UpdateStepOn.DownloadingUpdate
+                || auBackend.UpdateStepOn == UpdateStepOn.ExtractingUpdate)
+            {
+                UpdateProcessing(false);
+            }
+        }
 
 
 
@@ -1235,32 +1254,6 @@ namespace wyDay.Controls
             return ForceCheckForUpdate(false);
         }
 
-        //TODO: handle update step mismatch
-
-        /*
-        void updateHelper_UpdateStepMismatch(object sender, Response respType, UpdateStep previousStep)
-        {
-            if (respType == Response.Progress)
-            {
-                switch (updateHelper.UpdateStep)
-                {
-                    case UpdateStep.CheckForUpdate:
-                        SetUpdateStepOn(UpdateStepOn.Checking);
-                        break;
-                    case UpdateStep.DownloadUpdate:
-                        SetUpdateStepOn(UpdateStepOn.DownloadingUpdate);
-                        break;
-                    case UpdateStep.BeginExtraction:
-                        SetUpdateStepOn(UpdateStepOn.ExtractingUpdate);
-                        break;
-                }
-
-                // set the working progress animation
-                UpdateProcessing(false);
-            }
-        }
-        */
-
         void UpdateStepSuccessful(MenuType menuType)
         {
             // create the "hide" menu
@@ -1298,7 +1291,6 @@ namespace wyDay.Controls
             ani.StartAnimation();
         }
 
-        //TODO: test when 'UpdateAvailable' and 'InstallOnNextStart' are shown
         void SetUpdateStepOn(UpdateStepOn uso)
         {
             switch (uso)
