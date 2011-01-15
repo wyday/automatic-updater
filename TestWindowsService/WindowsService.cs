@@ -1,13 +1,19 @@
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.ServiceProcess;
-using System.Threading;
 using wyDay.Controls;
 
 namespace WindowsService
 {
     class WindowsService : ServiceBase
     {
+        //Note: to install this service, simply call:
+        // %SystemRoot%\Microsoft.NET\Framework\v2.0.50727\InstallUtil /i WindowsService.exe
+
+        //To uninstall simply call:
+        // %SystemRoot%\Microsoft.NET\Framework\v2.0.50727\InstallUtil /u WindowsService.exe
+
         /// <summary>
         /// Public Constructor for WindowsService.
         /// - Put all of your Initialization code here.
@@ -38,15 +44,27 @@ namespace WindowsService
             Run(new WindowsService());
         }
 
-
+        /// <summary>
+        /// Helper function to attach a debugger to the running service.
+        /// </summary>
         [Conditional("DEBUG")]
-        private static void DebugMode()
+        static void DebugMode()
         {
+            if (!Debugger.IsAttached)
+                Debugger.Launch();
+
             Debugger.Break();
         }
 
         static AutomaticUpdaterBackend auBackend;
-        static readonly ManualResetEvent resetEvent = new ManualResetEvent(false);
+
+        static void WriteToLog(string message, bool append)
+        {
+            using (StreamWriter outfile = new StreamWriter(@"C:\NETWinService.txt", append))
+            {
+                outfile.WriteLine(message);
+            }
+        }
 
         /// <summary>
         /// OnStart: Put startup code here
@@ -55,9 +73,7 @@ namespace WindowsService
         /// <param name="args"></param>
         protected override void OnStart(string[] args)
         {
-            //Note: DebugMode() is so you can attach a debugger (Visual Studio) to
-            //      to this process.
-            DebugMode();
+            WriteToLog(".NET Windows Service v1", false);
 
             auBackend = new AutomaticUpdaterBackend
                             {
@@ -76,38 +92,64 @@ namespace WindowsService
 
             auBackend.ReadyToBeInstalled += auBackend_ReadyToBeInstalled;
             auBackend.UpdateSuccessful += auBackend_UpdateSuccessful;
+            auBackend.UpToDate += auBackend_UpToDate;
+            auBackend.UpdateFailed += auBackend_UpdateFailed;
 
             //TODO: use the failed events for logging (CheckingFailed, DownloadingFailed, ExtractingFailed, UpdateFailed)
 
-            // the function to be called after all events have been set.
+            // the functions to be called after all events have been set.
             auBackend.Initialize();
             auBackend.AppLoaded();
 
-            //TODO: only ForceCheckForUpdate() every N days!
-            // You don't want to recheck for updates on every app start.
-            if (auBackend.UpdateStepOn == UpdateStepOn.Nothing /* && lastCheckWasNDaysAgo */)
-                auBackend.ForceCheckForUpdate();
+            // sees if you checked in the last 10 days, if not it rechecks
+            CheckEvery10Days();
 
-            // Blocks until "resetEvent.Set()" on another thread
-            resetEvent.WaitOne();
+            //TODO: Also, since this will be a service you should call CheckEvery10Days() from an another thread (rather than just at startup)
+        }
+
+        static void CheckEvery10Days()
+        {
+            // Only ForceCheckForUpdate() every N days!
+            // You don't want to recheck for updates on every app start.
+
+            if ((DateTime.Now - auBackend.LastCheckDate).TotalDays > 9
+                && auBackend.UpdateStepOn == UpdateStepOn.Nothing)
+            {
+                auBackend.ForceCheckForUpdate();
+            }
+        }
+
+        static void auBackend_UpdateFailed(object sender, FailArgs e)
+        {
+            //TODO: Notify the admin, or however you want to handle the failure
+            WriteToLog("Update failed. Reason\r\nTitle: " + e.ErrorTitle + "\r\nMessage: " + e.ErrorMessage, true);
+        }
+
+        static void auBackend_UpToDate(object sender, SuccessArgs e)
+        {
+            WriteToLog("Already up-to-date!", true);
         }
 
         static void auBackend_UpdateSuccessful(object sender, SuccessArgs e)
         {
-            Console.WriteLine("Successfully updated to version " + e.Version);
-            Console.WriteLine("Changes: ");
-            Console.WriteLine(auBackend.Changes);
+            WriteToLog("Successfully updated to version " + e.Version, true);
+            WriteToLog("Changes: ", true);
+            WriteToLog(auBackend.Changes, true);
         }
 
         static void auBackend_ReadyToBeInstalled(object sender, EventArgs e)
         {
+            // ReadyToBeInstalled event is called when either the UpdateStepOn == UpdateDownloaded or UpdateReadyToInstall
             if (auBackend.UpdateStepOn == UpdateStepOn.UpdateReadyToInstall)
             {
-                //TODO: delay the installation of the update until it's appropriate for your app.
+                //TODO: Delay the installation of the update until it's appropriate for your app.
 
-                //TODO: do any "spin-down" operations. auBackend.InstallNow() will exit this process, so run any cleanup functions now.
+                //TODO: Do any "spin-down" operations. auBackend.InstallNow() will
+                //      exit this process using Environment.Exit(0), so run
+                //      cleanup functions now (close threads, close running programs, release locked files, etc.)
 
                 // here we'll just close immediately to install the new version
+                WriteToLog("About to install the new version.", true);
                 auBackend.InstallNow();
             }
         }
