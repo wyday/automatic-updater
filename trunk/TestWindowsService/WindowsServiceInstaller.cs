@@ -23,7 +23,8 @@ namespace WindowsService
 
             //# Service Information
             serviceInstaller.DisplayName = "Test AutoUpdate Service in C#";
-            serviceInstaller.StartType = ServiceStartMode.Automatic;
+            serviceInstaller.Description = "A simple service that writes to \"C:\\NETWinService.txt\"";
+            serviceInstaller.StartType = ServiceStartMode.Manual;
 
             // This must be identical to the WindowsService.ServiceBase name
             // set in the constructor of WindowsService.cs
