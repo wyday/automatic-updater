@@ -27,17 +27,27 @@ namespace TestConsoleApp
 
             //TODO: use the failed events for logging (CheckingFailed, DownloadingFailed, ExtractingFailed, UpdateFailed)
 
-            // the function to be called after all events have been set.
+            // the functions to be called after all events have been set.
             auBackend.Initialize();
             auBackend.AppLoaded();
 
-            //TODO: only ForceCheckForUpdate() every N days!
-            // You don't want to recheck for updates on every app start.
-            if (auBackend.UpdateStepOn == UpdateStepOn.Nothing /* && lastCheckWasNDaysAgo */)
-                auBackend.ForceCheckForUpdate();
+            // sees if you checked in the last 10 days, if not it rechecks
+            CheckEvery10Days();
 
             // Blocks until "resetEvent.Set()" on another thread
             resetEvent.WaitOne();
+        }
+
+        static void CheckEvery10Days()
+        {
+            // Only ForceCheckForUpdate() every N days!
+            // You don't want to recheck for updates on every app start.
+
+            if ((DateTime.Now - auBackend.LastCheckDate).TotalDays > 9
+                && auBackend.UpdateStepOn == UpdateStepOn.Nothing)
+            {
+                auBackend.ForceCheckForUpdate();
+            }
         }
 
         static void auBackend_UpdateSuccessful(object sender, SuccessArgs e)
@@ -51,9 +61,11 @@ namespace TestConsoleApp
         {
             if (auBackend.UpdateStepOn == UpdateStepOn.UpdateReadyToInstall)
             {
-                //TODO: delay the installation of the update until it's appropriate for your app.
+                //TODO: Delay the installation of the update until it's appropriate for your app.
 
-                //TODO: do any "spin-down" operations. auBackend.InstallNow() will exit this process, so run any cleanup functions now.
+                //TODO: Do any "spin-down" operations. auBackend.InstallNow() will
+                //      exit this process using Environment.Exit(0), so run
+                //      cleanup functions now (close threads, close running programs, release locked files, etc.)
 
                 // here we'll just close immediately to install the new version
                 auBackend.InstallNow();
