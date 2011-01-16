@@ -112,7 +112,7 @@ namespace WindowsService
             // Only ForceCheckForUpdate() every N days!
             // You don't want to recheck for updates on every app start.
 
-            if ((DateTime.Now - auBackend.LastCheckDate).TotalDays > 9
+            if ((DateTime.Now - auBackend.LastCheckDate).TotalDays > 10
                 && auBackend.UpdateStepOn == UpdateStepOn.Nothing)
             {
                 auBackend.ForceCheckForUpdate();
