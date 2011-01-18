@@ -100,9 +100,6 @@
     <Compile Include="..\Control\UpdateHelper.cs">
       <Link>UpdateHelper.cs</Link>
     </Compile>
-    <Compile Include="..\Control\UpdateHelper.GetWyUpdate.cs">
-      <Link>UpdateHelper.GetWyUpdate.cs</Link>
-    </Compile>
     <Compile Include="..\Control\UpdateHelperData.cs">
       <Link>UpdateHelperData.cs</Link>
     </Compile>

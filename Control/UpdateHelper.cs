@@ -52,6 +52,8 @@ namespace wyDay.Controls
         [DllImport("User32")]
         static extern int ShowWindow(int hwnd, int nCmdShow);
 
+        [DllImport("user32.dll")]
+        static extern bool SetForegroundWindow(int hWnd);
 
         readonly Stack<UpdateHelperData> uhdStack = new Stack<UpdateHelperData>(1);
 
@@ -130,7 +132,7 @@ namespace wyDay.Controls
         void TryToConnectToPipe(string pipename)
         {
             // try to connect to the pipe - bail out if it takes longer than 30 seconds
-            for (int retries = 0; !pipeClient.Connected && retries < 60; retries++)
+            for (int retries = 0; !pipeClient.Connected && retries < 120; retries++)
             {
                 pipeClient.Connect(pipename);
 
@@ -143,7 +145,7 @@ namespace wyDay.Controls
                         break;
                     }
 
-                    Thread.Sleep(500);
+                    Thread.Sleep(250);
                 }
             }
         }
@@ -206,7 +208,7 @@ namespace wyDay.Controls
                 }
                 catch { }
 
-                //clear the to-send stack
+                // clear the to-send stack
                 uhdStack.Clear();
 
                 // inform the AutomaticUpdater that wyUpdate is no longer running
@@ -269,14 +271,13 @@ namespace wyDay.Controls
             SendAsync(uhd);
         }
 
+        int ClientWindowHandleToShow;
+
         public void InstallNow()
         {
-            // get the updater's window handle
-            GetClientWindowHandle();
-
             // show & set as foreground window ( SW_RESTORE = 9)
-            ShowWindow((int)ClientMainWindowHandle, 9);
-            SetForegroundWindow(ClientMainWindowHandle);
+            ShowWindow(ClientWindowHandleToShow, 9);
+            SetForegroundWindow(ClientWindowHandleToShow);
 
             //begin installing the update
             SendAsync(new UpdateHelperData(UpdateStep.Install));
@@ -363,6 +364,10 @@ namespace wyDay.Controls
                 if (UpdateStepMismatch != null)
                     UpdateStepMismatch(this, data.ResponseType, prev);
             }
+
+            // wyUpdate will give us its main Window Handle so we can pass focus to it
+            if (data.Action == UpdateAction.UpdateStep && data.UpdateStep == UpdateStep.RestartInfo)
+                ClientWindowHandleToShow = data.ProcessID;
 
             if (data.ResponseType != Response.Nothing && ProgressChanged != null)
                 ProgressChanged(this, data);
