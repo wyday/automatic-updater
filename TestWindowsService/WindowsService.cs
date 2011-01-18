@@ -95,7 +95,8 @@ namespace WindowsService
             auBackend.UpToDate += auBackend_UpToDate;
             auBackend.UpdateFailed += auBackend_UpdateFailed;
 
-            //TODO: use the failed events for logging (CheckingFailed, DownloadingFailed, ExtractingFailed, UpdateFailed)
+            //TODO: use the failed events for logging & error reporting:
+            // CheckingFailed, DownloadingFailed, ExtractingFailed, UpdateFailed
 
             // the functions to be called after all events have been set.
             auBackend.Initialize();
