@@ -7,31 +7,29 @@ namespace WindowsService
     [RunInstaller(true)]
     public class WindowsServiceInstaller : Installer
     {
-        /// <summary>
-        /// Public Constructor for WindowsServiceInstaller.
-        /// - Put all of your Initialization code here.
-        /// </summary>
+        /// <summary>Public Constructor for WindowsServiceInstaller.</summary>
         public WindowsServiceInstaller()
         {
-            ServiceProcessInstaller serviceProcessInstaller = new ServiceProcessInstaller();
-            ServiceInstaller serviceInstaller = new ServiceInstaller();
+            ServiceProcessInstaller spInstaller = new ServiceProcessInstaller
+                                                      {
+                                                          Account = ServiceAccount.LocalSystem,
+                                                          Username = null,
+                                                          Password = null
+                                                      };
 
-            //# Service Account Information
-            serviceProcessInstaller.Account = ServiceAccount.LocalSystem;
-            serviceProcessInstaller.Username = null;
-            serviceProcessInstaller.Password = null;
+            ServiceInstaller sInstaller = new ServiceInstaller
+                                              {
+                                                  DisplayName = "Test AutoUpdate Service in C#",
+                                                  Description = "A simple service that writes to \"C:\\NETWinService.txt\"",
+                                                  StartType = ServiceStartMode.Manual,
 
-            //# Service Information
-            serviceInstaller.DisplayName = "Test AutoUpdate Service in C#";
-            serviceInstaller.Description = "A simple service that writes to \"C:\\NETWinService.txt\"";
-            serviceInstaller.StartType = ServiceStartMode.Manual;
+                                                  // This must be identical to the WindowsService.ServiceBase name
+                                                  // set in the constructor of WindowsService.cs
+                                                  ServiceName = "Test AutoUpdate Service"
+                                              };
 
-            // This must be identical to the WindowsService.ServiceBase name
-            // set in the constructor of WindowsService.cs
-            serviceInstaller.ServiceName = "Test AutoUpdate Service";
-
-            Installers.Add(serviceProcessInstaller);
-            Installers.Add(serviceInstaller);
+            Installers.Add(spInstaller);
+            Installers.Add(sInstaller);
         }
     }
 }

@@ -25,7 +25,8 @@ namespace TestConsoleApp
             auBackend.ReadyToBeInstalled += auBackend_ReadyToBeInstalled;
             auBackend.UpdateSuccessful += auBackend_UpdateSuccessful;
 
-            //TODO: use the failed events for logging (CheckingFailed, DownloadingFailed, ExtractingFailed, UpdateFailed)
+            //TODO: use the failed events for logging & error reporting:
+            // CheckingFailed, DownloadingFailed, ExtractingFailed, UpdateFailed
 
             // the functions to be called after all events have been set.
             auBackend.Initialize();
