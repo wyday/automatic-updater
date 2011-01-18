@@ -253,6 +253,13 @@ namespace wyDay.Controls
         /// </summary>
         public string ServiceName { get; set; }
 
+#if !WPF
+        /// <summary>
+        /// Gets or sets whether the Application.Exit() function should be called (set to true for GUI apps).
+        /// </summary>
+        public bool UseApplicationExit { get; set; }
+#endif
+
         #endregion
 
         /// <summary>
@@ -535,7 +542,7 @@ namespace wyDay.Controls
                             System.Windows.Application.Current.Shutdown();
 #else
                             // close this application so it can be updated
-                            if (Application.MessageLoop)
+                            if (UseApplicationExit)
                             {
                                 // Use this since we are a WinForms app
                                 Application.Exit();
@@ -549,8 +556,7 @@ namespace wyDay.Controls
                                 Environment.Exit(0);
                             }
 #endif
-
-                            break;
+                            return;
                     }
 
                     StartNextStep(e.UpdateStep);
