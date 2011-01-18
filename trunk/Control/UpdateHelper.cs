@@ -11,7 +11,7 @@ using wyUpdate.Common;
 
 namespace wyDay.Controls
 {
-    internal partial class UpdateHelper
+    internal class UpdateHelper
     {
         // Constants
         const int MaxSendRetries = 20;
