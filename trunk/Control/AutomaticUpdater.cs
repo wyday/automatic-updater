@@ -23,7 +23,7 @@ namespace wyDay.Controls
     [ToolboxBitmapAttribute(typeof(AutomaticUpdater), "update-notify.png")]
     public class AutomaticUpdater : ContainerControl, ISupportInitialize
     {
-        readonly AutomaticUpdaterBackend auBackend = new AutomaticUpdaterBackend();
+        readonly AutomaticUpdaterBackend auBackend = new AutomaticUpdaterBackend { UseApplicationExit = true };
 
         Form ownerForm;
 
