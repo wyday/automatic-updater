@@ -1117,7 +1117,7 @@ namespace wyDay.Controls
         void TryAgainNow_Click(object sender, EventArgs e)
         {
             // check for updates (if we're actually further along, wyUpdate will set us straight)
-            ForceCheckForUpdate(false);
+            ForceCheckForUpdate(true);
         }
 
 

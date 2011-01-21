@@ -480,6 +480,21 @@ namespace wyDay.Controls
 
             auBackend.ClosingAborted += auBackend_ClosingAborted;
             auBackend.UpdateStepMismatch += auBackend_UpdateStepMismatch;
+
+            auBackend.CloseAppNow += auBackend_CloseAppNow;
+        }
+
+        void auBackend_CloseAppNow(object sender, EventArgs e)
+        {
+            // call this function from ownerForm's thread context
+            if (sender != null)
+            {
+                ownerForm.Dispatcher.Invoke(DispatcherPriority.Normal, new EventHandler(auBackend_CloseAppNow), null, e);
+                return;
+            }
+
+            // close this application so it can be updated
+            Application.Current.Shutdown();
         }
 
         void auBackend_UpToDate(object sender, SuccessArgs e)
@@ -487,7 +502,7 @@ namespace wyDay.Controls
             // call this function from ownerForm's thread context
             if (sender != null)
             {
-                ownerForm.Dispatcher.Invoke(DispatcherPriority.Normal, new SuccessHandler(auBackend_UpToDate), new object[] { null, e });
+                ownerForm.Dispatcher.Invoke(DispatcherPriority.Normal, new SuccessHandler(auBackend_UpToDate), null, e);
                 return;
             }
 
@@ -507,7 +522,7 @@ namespace wyDay.Controls
             // call this function from ownerForm's thread context
             if (sender != null)
             {
-                ownerForm.Dispatcher.Invoke(DispatcherPriority.Normal, new SuccessHandler(auBackend_UpdateSuccessful), new object[] { null, e });
+                ownerForm.Dispatcher.Invoke(DispatcherPriority.Normal, new SuccessHandler(auBackend_UpdateSuccessful), null, e);
                 return;
             }
 
@@ -526,7 +541,7 @@ namespace wyDay.Controls
             // call this function from ownerForm's thread context
             if (sender != null)
             {
-                ownerForm.Dispatcher.Invoke(DispatcherPriority.Normal, new FailHandler(auBackend_UpdateFailed), new object[] { null, e });
+                ownerForm.Dispatcher.Invoke(DispatcherPriority.Normal, new FailHandler(auBackend_UpdateFailed), null, e);
                 return;
             }
 
@@ -549,7 +564,7 @@ namespace wyDay.Controls
             // call this function from ownerForm's thread context
             if (sender != null)
             {
-                ownerForm.Dispatcher.Invoke(DispatcherPriority.Normal, new EventHandler(auBackend_UpdateAvailable), new object[] { null, e });
+                ownerForm.Dispatcher.Invoke(DispatcherPriority.Normal, new EventHandler(auBackend_UpdateAvailable), null, e);
                 return;
             }
 
@@ -579,7 +594,7 @@ namespace wyDay.Controls
             // call this function from ownerForm's thread context
             if (sender != null)
             {
-                ownerForm.Dispatcher.Invoke(DispatcherPriority.Normal, new EventHandler(auBackend_ReadyToBeInstalled), new object[] { null, e });
+                ownerForm.Dispatcher.Invoke(DispatcherPriority.Normal, new EventHandler(auBackend_ReadyToBeInstalled), null, e );
                 return;
             }
 
@@ -611,7 +626,7 @@ namespace wyDay.Controls
             // call this function from ownerForm's thread context
             if (sender != null)
             {
-                ownerForm.Dispatcher.Invoke(DispatcherPriority.Normal, new EventHandler(auBackend_Cancelled), new object[] { null, e });
+                ownerForm.Dispatcher.Invoke(DispatcherPriority.Normal, new EventHandler(auBackend_Cancelled), null, e);
                 return;
             }
 
@@ -630,7 +645,7 @@ namespace wyDay.Controls
             // call this function from ownerForm's thread context
             if (sender != null)
             {
-                ownerForm.Dispatcher.Invoke(DispatcherPriority.Normal, new BeforeHandler(auBackend_BeforeChecking), new object[] { null, e });
+                ownerForm.Dispatcher.Invoke(DispatcherPriority.Normal, new BeforeHandler(auBackend_BeforeChecking), null, e);
                 return;
             }
 
@@ -662,7 +677,7 @@ namespace wyDay.Controls
             // call this function from ownerForm's thread context
             if (sender != null)
             {
-                ownerForm.Dispatcher.Invoke(DispatcherPriority.Normal, new BeforeHandler(auBackend_BeforeDownloading), new object[] { null, e });
+                ownerForm.Dispatcher.Invoke(DispatcherPriority.Normal, new BeforeHandler(auBackend_BeforeDownloading), null, e);
                 return;
             }
 
@@ -687,7 +702,7 @@ namespace wyDay.Controls
             // call this function from ownerForm's thread context
             if (sender != null)
             {
-                ownerForm.Dispatcher.Invoke(DispatcherPriority.Normal, new BeforeHandler(auBackend_BeforeExtracting), new object[] { null, e });
+                ownerForm.Dispatcher.Invoke(DispatcherPriority.Normal, new BeforeHandler(auBackend_BeforeExtracting), null, e);
                 return;
             }
 
@@ -701,7 +716,7 @@ namespace wyDay.Controls
             // call this function from ownerForm's thread context
             if (sender != null)
             {
-                ownerForm.Dispatcher.Invoke(DispatcherPriority.Normal, new FailHandler(auBackend_CheckingFailed), new object[] { null, e });
+                ownerForm.Dispatcher.Invoke(DispatcherPriority.Normal, new FailHandler(auBackend_CheckingFailed), null, e);
                 return;
             }
 
@@ -718,7 +733,7 @@ namespace wyDay.Controls
             // call this function from ownerForm's thread context
             if (sender != null)
             {
-                ownerForm.Dispatcher.Invoke(DispatcherPriority.Normal, new FailHandler(auBackend_DownloadingFailed), new object[] { null, e });
+                ownerForm.Dispatcher.Invoke(DispatcherPriority.Normal, new FailHandler(auBackend_DownloadingFailed), null, e);
                 return;
             }
 
@@ -735,7 +750,7 @@ namespace wyDay.Controls
             // call this function from ownerForm's thread context
             if (sender != null)
             {
-                ownerForm.Dispatcher.Invoke(DispatcherPriority.Normal, new FailHandler(auBackend_ExtractingFailed), new object[] { null, e });
+                ownerForm.Dispatcher.Invoke(DispatcherPriority.Normal, new FailHandler(auBackend_ExtractingFailed), null, e);
                 return;
             }
 
@@ -772,7 +787,7 @@ namespace wyDay.Controls
             // call this function from ownerForm's thread context
             if (sender != null)
             {
-                ownerForm.Dispatcher.Invoke(DispatcherPriority.Normal, new UpdateProgressChanged(auBackend_ProgressChanged), new object[] { null, progress });
+                ownerForm.Dispatcher.Invoke(DispatcherPriority.Normal, new UpdateProgressChanged(auBackend_ProgressChanged), null, progress);
                 return;
             }
 
@@ -790,7 +805,7 @@ namespace wyDay.Controls
             // call this function from ownerForm's thread context
             if (sender != null)
             {
-                ownerForm.Dispatcher.Invoke(DispatcherPriority.Normal, new EventHandler(auBackend_ClosingAborted), new object[] { null, e });
+                ownerForm.Dispatcher.Invoke(DispatcherPriority.Normal, new EventHandler(auBackend_ClosingAborted), null, e);
                 return;
             }
 
@@ -810,7 +825,7 @@ namespace wyDay.Controls
             // call this function from ownerForm's thread context
             if (sender != null)
             {
-                ownerForm.Dispatcher.Invoke(DispatcherPriority.Normal, new EventHandler(auBackend_UpdateStepMismatch), new object[] { null, e });
+                ownerForm.Dispatcher.Invoke(DispatcherPriority.Normal, new EventHandler(auBackend_UpdateStepMismatch), null, e);
                 return;
             }
 
@@ -1094,7 +1109,7 @@ namespace wyDay.Controls
         void TryAgainNow_Click(object sender, EventArgs e)
         {
             // check for updates (if we're actually further along, wyUpdate will set us straight)
-            ForceCheckForUpdate(false);
+            ForceCheckForUpdate(true);
         }
 
 
