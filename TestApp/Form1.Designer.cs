@@ -134,8 +134,6 @@
             this.automaticUpdater.TabIndex = 3;
             this.automaticUpdater.UpdateType = wyDay.Controls.UpdateType.DoNothing;
             this.automaticUpdater.wyUpdateCommandline = resources.GetString("automaticUpdater.wyUpdateCommandline");
-            this.automaticUpdater.wyUpdateLocation = "C:\\Users\\Wyatt\\Documents\\Visual Studio 2005\\Projects\\wyUpdate\\wyUpdate Tests\\Oock" +
-                "le\\wyUpdate.exe";
             this.automaticUpdater.ClosingAborted += new System.EventHandler(this.automaticUpdater_ClosingAborted);
             // 
             // Form1
