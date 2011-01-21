@@ -1,7 +1,7 @@
 ﻿<Window x:Class="TestAppWPF.Window1"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    Title="Version 1.0" Height="220" Width="327" xmlns:my="clr-namespace:wyDay.Controls;assembly=AutomaticUpdaterWPF" xmlns:wf="clr-namespace:System.Windows.Forms;assembly=System.Windows.Forms">
+    Title="Version 1.0" Height="220" Width="327" xmlns:my="clr-namespace:wyDay.Controls;assembly=AutomaticUpdaterWPF">
     <Grid>
         <Button Height="29" HorizontalAlignment="Right" Margin="0,0,32,12" Name="button1" VerticalAlignment="Bottom" Width="90" Visibility="Hidden">OK</Button>
         <Menu IsMainMenu="True" Height="21" VerticalAlignment="Top">
