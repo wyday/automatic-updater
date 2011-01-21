@@ -253,7 +253,12 @@ namespace wyDay.Controls
         /// </summary>
         public string ServiceName { get; set; }
 
-#if !WPF
+#if WPF
+        /// <summary>
+        /// When this event is called you should shutdown the application immediately.
+        /// </summary>
+        public event EventHandler CloseAppNow;
+#else
         /// <summary>
         /// Gets or sets whether the Application.Exit() function should be called (set to true for GUI apps).
         /// </summary>
@@ -267,9 +272,7 @@ namespace wyDay.Controls
         /// </summary>
         public AutomaticUpdaterBackend()
         {
-#if WPF
-            System.Windows.Application.Current.Exit += Application_ApplicationExit;
-#else
+#if !WPF
             Application.ApplicationExit += Application_ApplicationExit;
 #endif
 
@@ -301,7 +304,7 @@ namespace wyDay.Controls
             if (UpdateStepOn == UpdateStepOn.ExtractingUpdate)
                 throw new Exception("The update must finish extracting before you can install it.");
 
-            // set the internal update type to autmatic so the user won't be prompted anymore
+            // set the internal update type to automatic so the user won't be prompted anymore
             internalUpdateType = UpdateType.Automatic;
 
             if (UpdateStepOn == UpdateStepOn.UpdateAvailable)
@@ -490,10 +493,9 @@ namespace wyDay.Controls
                     // show the error icon & menu
                     // and set last successful step
                     UpdateStepFailed(UpdateStepToUpdateStepOn(e.UpdateStep), new FailArgs { ErrorTitle = e.ExtraData[0], ErrorMessage = e.ExtraData[1] });
-                    
+
                     break;
                 case Response.Succeeded:
-
 
                     switch (e.UpdateStep)
                     {
@@ -505,8 +507,13 @@ namespace wyDay.Controls
                             if (e.ExtraData.Count != 0)
                             {
                                 version = e.ExtraData[0];
-                                changes = e.ExtraData[1];
-                                changesAreRTF = e.ExtraDataIsRTF[1];
+
+                                // if there are changes, save them
+                                if (e.ExtraData.Count > 1)
+                                {
+                                    changes = e.ExtraData[1];
+                                    changesAreRTF = e.ExtraDataIsRTF[1];
+                                }
 
                                 // save the changes to the AutoUpdateInfo file
                                 AutoUpdaterInfo.UpdateVersion = version;
@@ -535,12 +542,16 @@ namespace wyDay.Controls
                             break;
                         case UpdateStep.RestartInfo:
 
+#if WPF
+                            // show client & send the "begin update" message
+                            updateHelper.InstallNow();
+
+                            // close this application so it can be updated
+                            if (CloseAppNow != null)
+                                CloseAppNow(this, EventArgs.Empty);
+#else
                             RestartInfoSent = true;
 
-#if WPF
-                            // close this application so it can be updated
-                            System.Windows.Application.Current.Shutdown();
-#else
                             // close this application so it can be updated
                             if (UseApplicationExit)
                             {
@@ -572,6 +583,7 @@ namespace wyDay.Controls
             }
         }
 
+#if !WPF
         void Application_ApplicationExit(object sender, EventArgs e)
         {
             if (RestartInfoSent)
@@ -580,6 +592,7 @@ namespace wyDay.Controls
                 updateHelper.InstallNow();
             }
         }
+#endif
 
         void StartNextStep(UpdateStep updateStepOn)
         {
@@ -772,7 +785,7 @@ namespace wyDay.Controls
                         break;
                 }
             }
-            else
+            else // UpdateStepOn == UpdateStepOn.Nothing
             {
                 switch (AutoUpdaterInfo.AutoUpdaterStatus)
                 {
