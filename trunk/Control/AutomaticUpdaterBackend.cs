@@ -24,8 +24,6 @@ namespace wyDay.Controls
         string version, changes;
         bool changesAreRTF;
 
-        bool RestartInfoSent;
-
         #region Events
 
         /// <summary>
@@ -259,6 +257,8 @@ namespace wyDay.Controls
         /// </summary>
         public event EventHandler CloseAppNow;
 #else
+        bool RestartInfoSent;
+
         /// <summary>
         /// Gets or sets whether the Application.Exit() function should be called (set to true for GUI apps).
         /// </summary>
