@@ -77,12 +77,14 @@ namespace WindowsService
 
             auBackend = new AutomaticUpdaterBackend
                             {
-                                //TODO: set a unique string. For instance, "appname-companyname"
+                                //TODO: set a unique string.
+                                // For instance, "appname-companyname"
                                 GUID = "a-string-that-uniquely-IDs-your-service",
 
-                                // With UpdateType set to Automatic, you're still in charge of
-                                // checking for updates, but the AutomaticUpdaterBackend
-                                // continues with the downloading and extracting automatically.
+                                // With UpdateType set to Automatic, you're still in
+                                // charge of checking for updates, but the
+                                // AutomaticUpdaterBackend continues with the
+                                // downloading and extracting automatically.
                                 UpdateType = UpdateType.Automatic,
 
                                 // We set the service name that will be used by wyUpdate
@@ -102,10 +104,17 @@ namespace WindowsService
             auBackend.Initialize();
             auBackend.AppLoaded();
 
-            // sees if you checked in the last 10 days, if not it rechecks
-            CheckEvery10Days();
+            if (!auBackend.ClosingForInstall)
+            {
+                // sees if you checked in the last 10 days, if not it rechecks
+                CheckEvery10Days();
 
-            //TODO: Also, since this will be a service you should call CheckEvery10Days() from an another thread (rather than just at startup)
+                //Note: Also, since this will be a service you should call
+                //      CheckEvery10Days() from an another thread (rather
+                //      than just at startup)
+
+                //TODO: do your normal service work
+            }
         }
 
         static void CheckEvery10Days()
