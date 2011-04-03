@@ -13,33 +13,7 @@ using System.Windows.Threading;
 namespace wyDay.Controls
 {
     /// <summary>
-    /// Follow steps 1a or 1b and then 2 to use this custom control in a XAML file.
-    ///
-    /// Step 1a) Using this custom control in a XAML file that exists in the current project.
-    /// Add this XmlNamespace attribute to the root element of the markup file where it is 
-    /// to be used:
-    ///
-    ///     xmlns:MyNamespace="clr-namespace:AutomaticUpdaterWPF"
-    ///
-    ///
-    /// Step 1b) Using this custom control in a XAML file that exists in a different project.
-    /// Add this XmlNamespace attribute to the root element of the markup file where it is 
-    /// to be used:
-    ///
-    ///     xmlns:MyNamespace="clr-namespace:AutomaticUpdaterWPF;assembly=AutomaticUpdaterWPF"
-    ///
-    /// You will also need to add a project reference from the project where the XAML file lives
-    /// to this project and Rebuild to avoid compilation errors:
-    ///
-    ///     Right click on the target project in the Solution Explorer and
-    ///     "Add Reference"->"Projects"->[Select this project]
-    ///
-    ///
-    /// Step 2)
-    /// Go ahead and use your control in the XAML file.
-    ///
-    ///     <MyNamespace:CustomControl1/>
-    ///
+    /// Represents the AutomaticUpdater control.
     /// </summary>
     public class AutomaticUpdater : Canvas, ISupportInitialize 
     {
@@ -612,7 +586,7 @@ namespace wyDay.Controls
             // animate this open
             BeginAniOpen();
 
-            AnimateImage(Properties.Resources.update_notify, true);
+            AnimateImage(Properties.Resources.info, true);
 
             SetMenuText(translation.InstallUpdateMenu);
 
@@ -767,7 +741,10 @@ namespace wyDay.Controls
             if (e.wyUpdatePrematureExit)
             {
                 e.ErrorTitle = translation.PrematureExitTitle;
-                e.ErrorMessage = translation.PrematureExitMessage;
+
+                // use the general "premature exit" message only when there's no other message present
+                if (e.ErrorMessage == null || e.ErrorMessage == AUTranslation.C_PrematureExitMessage)
+                    e.ErrorMessage = translation.PrematureExitMessage;
             }
 
             failArgs = e;
@@ -1038,7 +1015,7 @@ namespace wyDay.Controls
 
                 default:
 
-                    ForceCheckForUpdate();
+                    ForceCheckForUpdate(false, true);
                     break;
             }
         }
@@ -1249,12 +1226,18 @@ namespace wyDay.Controls
         /// <returns>Returns true if checking has begun, false otherwise.</returns>
         public bool ForceCheckForUpdate(bool recheck)
         {
+            return ForceCheckForUpdate(recheck, false);
+        }
+
+        bool ForceCheckForUpdate(bool recheck, bool fromUI)
+        {
             // if not already checking for updates then begin checking.
-            if (recheck || UpdateStepOn == UpdateStepOn.Nothing)
+            if (UpdateStepOn == UpdateStepOn.Nothing || (recheck && UpdateStepOn == UpdateStepOn.UpdateAvailable))
             {
-                Visibility = Visibility.Visible;
-                auBackend.ForceCheckForUpdate(recheck);
-                return true;
+                if (recheck || fromUI)
+                    Visibility = KeepHidden ? Visibility.Hidden : Visibility.Visible;
+
+                return auBackend.ForceCheckForUpdate(recheck);
             }
 
             return false;
@@ -1266,7 +1249,7 @@ namespace wyDay.Controls
         /// <returns>Returns true if checking has begun, false otherwise.</returns>
         public bool ForceCheckForUpdate()
         {
-            return ForceCheckForUpdate(false);
+            return ForceCheckForUpdate(false, false);
         }
 
         void UpdateStepSuccessful(MenuType menuType)

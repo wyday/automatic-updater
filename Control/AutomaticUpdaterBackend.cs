@@ -156,13 +156,11 @@ namespace wyDay.Controls
             {
                 // disallow setting after AutoUpdaterInfo is not null
                 if (AutoUpdaterInfo != null)
-                    throw new Exception("You must set the GUID at Design time (or before you call the Initialize function).");
+                    throw new Exception("You must set the GUID at Design time (or before you call the Initialize() function).");
 
+                // disallow bad filename characters
                 if (value.IndexOfAny(Path.GetInvalidFileNameChars()) != -1)
-                {
-                    // there are bad filename characters
                     throw new Exception("The GUID cannot contain invalid filename characters.");
-                }
 
                 m_GUID = value;
             }
@@ -295,8 +293,7 @@ namespace wyDay.Controls
                 throw new Exception("There must be an update available before you can install it.");
             
             if (UpdateStepOn == UpdateStepOn.Checking)
-                throw new Exception(
-                    "The AutomaticUpdater must finish checking for updates before they can be installed.");
+                throw new Exception("The AutomaticUpdater must finish checking for updates before they can be installed.");
 
             if (UpdateStepOn == UpdateStepOn.DownloadingUpdate)
                 throw new Exception("The update must be downloaded before you can install it.");
@@ -358,7 +355,7 @@ namespace wyDay.Controls
                 throw new FailedToInitializeException();
 
             // if not already checking for updates then begin checking.
-            if (recheck || UpdateStepOn == UpdateStepOn.Nothing)
+            if (UpdateStepOn == UpdateStepOn.Nothing || (recheck && UpdateStepOn == UpdateStepOn.UpdateAvailable))
             {
                 BeforeArgs bArgs = new BeforeArgs();
 
@@ -471,16 +468,16 @@ namespace wyDay.Controls
                 UpdateStepMismatch(this, EventArgs.Empty);
         }
 
-        void updateHelper_PipeServerDisconnected(object sender, EventArgs e)
+        void updateHelper_PipeServerDisconnected(object sender, UpdateHelperData e)
         {
-            // the client should only ever exit after success or failure
+            // wyUpdate should only ever exit after success or failure
             // otherwise it is a premature exit (and needs to be treated as an error)
             if (UpdateStepOn == UpdateStepOn.Checking
                 || UpdateStepOn == UpdateStepOn.DownloadingUpdate
                 || UpdateStepOn == UpdateStepOn.ExtractingUpdate)
             {
                 // wyUpdate premature exit error
-                UpdateStepFailed(UpdateStepOn, new FailArgs {wyUpdatePrematureExit = true});
+                UpdateStepFailed(UpdateStepOn, new FailArgs { wyUpdatePrematureExit = true, ErrorTitle = e.ExtraData[0], ErrorMessage = e.ExtraData[1] });
             }
         }
 
