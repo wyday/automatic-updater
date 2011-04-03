@@ -742,7 +742,10 @@ namespace wyDay.Controls
             if (e.wyUpdatePrematureExit)
             {
                 e.ErrorTitle = translation.PrematureExitTitle;
-                e.ErrorMessage = translation.PrematureExitMessage;
+
+                // use the general "premature exit" message only when there's no other message present
+                if (e.ErrorMessage == null || e.ErrorMessage == AUTranslation.C_PrematureExitMessage)
+                    e.ErrorMessage = translation.PrematureExitMessage;
             }
 
             failArgs = e;
@@ -1044,7 +1047,7 @@ namespace wyDay.Controls
 
                 default:
 
-                    ForceCheckForUpdate();
+                    ForceCheckForUpdate(false, true);
                     break;
             }
         }
@@ -1243,12 +1246,18 @@ namespace wyDay.Controls
         /// <returns>Returns true if checking has begun, false otherwise.</returns>
         public bool ForceCheckForUpdate(bool recheck)
         {
+            return ForceCheckForUpdate(recheck, false);
+        }
+
+        bool ForceCheckForUpdate(bool recheck, bool fromUI)
+        {
             // if not already checking for updates then begin checking.
-            if (recheck || UpdateStepOn == UpdateStepOn.Nothing)
+            if (UpdateStepOn == UpdateStepOn.Nothing || (recheck && UpdateStepOn == UpdateStepOn.UpdateAvailable))
             {
-                Visible = true;
-                auBackend.ForceCheckForUpdate(recheck);
-                return true;
+                if (recheck || fromUI)
+                    Visible = !KeepHidden;
+
+                return auBackend.ForceCheckForUpdate(recheck);
             }
 
             return false;
@@ -1260,7 +1269,7 @@ namespace wyDay.Controls
         /// <returns>Returns true if checking has begun, false otherwise.</returns>
         public bool ForceCheckForUpdate()
         {
-            return ForceCheckForUpdate(false);
+            return ForceCheckForUpdate(false, false);
         }
 
         void RefreshTextRect()

@@ -2,6 +2,9 @@
 {
     public class AUTranslation
     {
+        internal const string C_PrematureExitTitle = "wyUpdate exited prematurely";
+        internal const string C_PrematureExitMessage = "wyUpdate ended before the current update step could be completed.";
+
 #if WPF
         // wpf menus require underscores for hint characters
         string m_CheckForUpdatesMenu = "_Check for updates";
@@ -20,8 +23,8 @@
         string m_HideMenu = "Hide";
         string m_ViewChangesMenu = "View changes in version %version%";
 
-        string m_PrematureExitTitle = "wyUpdate exited prematurely";
-        string m_PrematureExitMessage = "wyUpdate ended before the current update step could be completed.";
+        string m_PrematureExitTitle = C_PrematureExitTitle;
+        string m_PrematureExitMessage = C_PrematureExitMessage;
 
         string m_StopChecking = "Stop checking for updates for now";
         string m_StopDownloading = "Stop downloading update for now";

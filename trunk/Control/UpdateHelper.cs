@@ -31,7 +31,16 @@ namespace wyDay.Controls
             {
                 m_wyUpdateLocation = value;
 
-                m_CompleteWULoc = Path.IsPathRooted(value) ? value : Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), value);
+                // Try to create the complete wyUpdate path (expanding relative paths, etc.) . If it fails,
+                // we'll be notifying the user later. (Hence the empty "catch" block).
+                try
+                {
+                    m_CompleteWULoc = Path.GetFullPath(Path.IsPathRooted(value)
+                                        ? value
+                                        : Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), value)
+                                      );
+                }
+                catch { }
             }
         }
 
@@ -45,11 +54,11 @@ namespace wyDay.Controls
 
         public event UpdateStepMismatchHandler UpdateStepMismatch;
         public event ResponseHandler ProgressChanged;
-        public event EventHandler PipeServerDisconnected;
+        public event ResponseHandler PipeServerDisconnected;
 
         public UpdateStep UpdateStep = UpdateStep.CheckForUpdate;
 
-        [DllImport("User32")]
+        [DllImport("user32.dll")]
         static extern int ShowWindow(int hwnd, int nCmdShow);
 
         [DllImport("user32.dll")]
@@ -59,7 +68,16 @@ namespace wyDay.Controls
 
         public UpdateHelper()
         {
-            m_CompleteWULoc = Path.IsPathRooted(m_wyUpdateLocation) ? m_wyUpdateLocation : Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), m_wyUpdateLocation);
+            // Try to create the complete wyUpdate path. If it fails,
+            // we'll be notifying the user later. (Hence the empty "catch" block).
+            try
+            {
+                m_CompleteWULoc = Path.GetFullPath(Path.IsPathRooted(m_wyUpdateLocation)
+                                    ? m_wyUpdateLocation
+                                    : Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), m_wyUpdateLocation)
+                                  );
+            }
+            catch { }
 
             CreateNewPipeClient();
 
@@ -83,20 +101,27 @@ namespace wyDay.Controls
 
         bool StartClient()
         {
+            if (string.IsNullOrEmpty(m_CompleteWULoc))
+                throw new Exception("The wyUpdate executable path supplied is not valid. Make sure wyUpdate exists on disk.");
+
             // get the unique pipe name (the last 246 chars of the complete path)
             string pipeName = UpdateHelperData.PipenameFromFilename(m_CompleteWULoc);
 
             // first try to connect to the pipe
-            pipeClient.Connect(pipeName);
+            if (!pipeClient.Connected)
+                pipeClient.Connect(pipeName);
 
             if (pipeClient.Connected)
             {
                 // request the processId
                 if (!RetrySend((new UpdateHelperData(UpdateAction.GetwyUpdateProcessID)).GetByteArray()))
-                    throw new Exception("Failed to get the wyUpdate ProcessID.");
+                    throw new Exception("Failed to get the wyUpdate Process ID.");
 
                 return true;
             }
+
+            if (!File.Exists(m_CompleteWULoc))
+                throw new Exception("The wyUpdate executable was not found: " + m_CompleteWULoc);
 
             ClientProcess = new Process
                                 {
@@ -118,15 +143,7 @@ namespace wyDay.Controls
 
             TryToConnectToPipe(pipeName);
 
-            // if the pipe couldn't connect, bail out and fail
-            if (!pipeClient.Connected)
-            {
-                ClientProcess.Kill();
-                ClientProcess = null;
-                return false;
-            }
-
-            return true;
+            return pipeClient.Connected;
         }
 
         void TryToConnectToPipe(string pipename)
@@ -148,6 +165,18 @@ namespace wyDay.Controls
                     Thread.Sleep(250);
                 }
             }
+
+            if (!pipeClient.Connected && ClientProcess != null)
+            {
+                // try to kill the process without throwing any exceptions
+                try
+                {
+                    ClientProcess.Kill();
+                }
+                catch { }
+
+                ClientProcess = null;
+            }
         }
 
         void ServerDisconnected()
@@ -155,7 +184,7 @@ namespace wyDay.Controls
             ClientProcess = null;
 
             if (PipeServerDisconnected != null)
-                PipeServerDisconnected(this, EventArgs.Empty);
+                PipeServerDisconnected(this, new UpdateHelperData(Response.Failed, UpdateStep, AUTranslation.C_PrematureExitTitle, AUTranslation.C_PrematureExitMessage));
         }
 
         void bw_DoWork(object sender, DoWorkEventArgs e)
@@ -164,7 +193,7 @@ namespace wyDay.Controls
             if (ClientProcess == null)
             {
                 if (!StartClient())
-                    throw new Exception("Updater client failed to start.");
+                    throw new Exception("wyUpdate failed to start.");
             }
 
             if (!RetrySend(((UpdateHelperData)e.Argument).GetByteArray()))
@@ -184,7 +213,8 @@ namespace wyDay.Controls
 
                 // try to send the message
                 (messageFailedToSend = !pipeClient.SendMessage(message))
-                    && retries < MaxSendRetries;
+                    && retries < MaxSendRetries
+                    && pipeClient.Connected;
 
                 retries++)
             {
@@ -192,7 +222,9 @@ namespace wyDay.Controls
                 Thread.Sleep(MilliSecsBetweenRetry);
             }
 
-            return !messageFailedToSend;
+            // if the client process has already exited, just say the send succeeded
+            // otherwise return whether the send actually succeeded
+            return pipeClient.Connected ? !messageFailedToSend : true;
         }
 
         void bw_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
@@ -208,12 +240,16 @@ namespace wyDay.Controls
                 }
                 catch { }
 
+                // set the client process to null so it can be restarted
+                // when the user retries.
+                ClientProcess = null;
+
                 // clear the to-send stack
                 uhdStack.Clear();
 
                 // inform the AutomaticUpdater that wyUpdate is no longer running
                 if (PipeServerDisconnected != null)
-                    PipeServerDisconnected(this, EventArgs.Empty);
+                    PipeServerDisconnected(this, new UpdateHelperData(Response.Failed, UpdateStep, AUTranslation.C_PrematureExitTitle, e.Error.Message));
             }
             else
             {
@@ -330,16 +366,9 @@ namespace wyDay.Controls
                 // if the process is running - try to kill it
                 if (!pipeClient.Connected)
                 {
-                    try
-                    {
-                        if (!ClientProcess.HasExited)
-                            ClientProcess.Kill();
-                    }
-                    catch { }
-
                     // inform the AutomaticUpdater that wyUpdate is no longer running
                     if (PipeServerDisconnected != null)
-                        PipeServerDisconnected(this, EventArgs.Empty);
+                        PipeServerDisconnected(this, new UpdateHelperData(Response.Failed, UpdateStep, AUTranslation.C_PrematureExitTitle, "Failed to connect to the new version of wyUpdate.exe"));
                 }
 
                 // begin where we left off
