@@ -23,7 +23,7 @@ namespace wyDay.Controls
     [ToolboxBitmapAttribute(typeof(AutomaticUpdater), "update-notify.png")]
     public class AutomaticUpdater : ContainerControl, ISupportInitialize
     {
-        readonly AutomaticUpdaterBackend auBackend = new AutomaticUpdaterBackend { UseApplicationExit = true };
+        readonly AutomaticUpdaterBackend auBackend;
 
         Form ownerForm;
 
@@ -407,6 +407,8 @@ namespace wyDay.Controls
         /// </summary>
         public AutomaticUpdater()
         {
+            auBackend = new AutomaticUpdaterBackend(true) {UseApplicationExit = true};
+
             // This turns on double buffering of all custom GDI+ drawing
             SetStyle(ControlStyles.AllPaintingInWmPaint
                 | ControlStyles.SupportsTransparentBackColor
@@ -617,13 +619,6 @@ namespace wyDay.Controls
 
         void auBackend_BeforeChecking(object sender, BeforeArgs e)
         {
-            // call this function from ownerForm's thread context
-            if (sender != null)
-            {
-                ownerForm.Invoke(new BeforeHandler(auBackend_BeforeChecking), new object[] { null, e });
-                return;
-            }
-
             // disable any scheduled checking
             tmrWaitBeforeCheck.Enabled = false;
 
@@ -831,7 +826,6 @@ namespace wyDay.Controls
                     ownerForm.Load -= ownerForm_Load;
 
                 ownerForm = value;
-
                 ownerForm.Load += ownerForm_Load;
             }
         }
@@ -1426,6 +1420,10 @@ namespace wyDay.Controls
 
         void ownerForm_Load(object sender, EventArgs e)
         {
+            // if we've already recieved messages from wyUpdate
+            // then process them now.
+            auBackend.FlushResponses();
+
             SetMenuText(translation.CheckForUpdatesMenu);
 
             // if we want to kill ouself, then don't bother checking for updates

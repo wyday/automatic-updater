@@ -279,6 +279,16 @@ namespace wyDay.Controls
             updateHelper.UpdateStepMismatch += updateHelper_UpdateStepMismatch;
         }
 
+        internal AutomaticUpdaterBackend(bool bufferResponse) : this()
+        {
+            updateHelper.BufferResponse = bufferResponse;
+        }
+
+        internal void FlushResponses()
+        {
+            updateHelper.FlushResponses();
+        }
+
         /// <summary>
         /// Proceed with the download and installation of pending updates.
         /// </summary>

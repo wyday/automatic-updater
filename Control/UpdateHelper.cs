@@ -64,7 +64,24 @@ namespace wyDay.Controls
         [DllImport("user32.dll")]
         static extern bool SetForegroundWindow(int hWnd);
 
-        readonly Stack<UpdateHelperData> uhdStack = new Stack<UpdateHelperData>(1);
+        readonly Stack<UpdateHelperData> sendBuffer = new Stack<UpdateHelperData>(1);
+        readonly List<UpdateHelperData> receivedBuffer = new List<UpdateHelperData>();
+        public bool BufferResponse;
+
+        public void FlushResponses()
+        {
+            lock (receivedBuffer)
+            {
+                foreach (var resp in receivedBuffer)
+                {
+                    // process the response
+                    ProcessReceivedMessage(resp);
+                }
+
+                receivedBuffer.Clear();
+                BufferResponse = false;
+            }
+        }
 
         public UpdateHelper()
         {
@@ -89,13 +106,13 @@ namespace wyDay.Controls
         {
             if (pipeClient != null)
             {
-                pipeClient.MessageReceived -= ProcessReceivedMessage;
+                pipeClient.MessageReceived -= SafeProcessReceivedMessage;
                 pipeClient.ServerDisconnected -= ServerDisconnected;
             }
 
             pipeClient = new PipeClient();
 
-            pipeClient.MessageReceived += ProcessReceivedMessage;
+            pipeClient.MessageReceived += SafeProcessReceivedMessage;
             pipeClient.ServerDisconnected += ServerDisconnected;
         }
 
@@ -245,7 +262,7 @@ namespace wyDay.Controls
                 ClientProcess = null;
 
                 // clear the to-send stack
-                uhdStack.Clear();
+                sendBuffer.Clear();
 
                 // inform the AutomaticUpdater that wyUpdate is no longer running
                 if (PipeServerDisconnected != null)
@@ -254,9 +271,9 @@ namespace wyDay.Controls
             else
             {
                 // process the next in stack
-                if (uhdStack.Count > 0)
+                if (sendBuffer.Count > 0)
                 {
-                    UpdateHelperData uhd = uhdStack.Pop();
+                    UpdateHelperData uhd = sendBuffer.Pop();
                     UpdateStep = uhd.UpdateStep;
 
                     // begin sending to the client
@@ -329,7 +346,7 @@ namespace wyDay.Controls
             // if currently working, add the new message to the stack
             if (bw.IsBusy)
             {
-                uhdStack.Push(uhd);
+                sendBuffer.Push(uhd);
             }
             else
             {
@@ -341,11 +358,30 @@ namespace wyDay.Controls
             }
         }
 
-        void ProcessReceivedMessage(byte[] message)
+        void SafeProcessReceivedMessage(byte[] message)
         {
             // Cast the data to the type of object we sent:
             UpdateHelperData data = UpdateHelperData.FromByteArray(message);
 
+            if (BufferResponse)
+            {
+                lock (receivedBuffer)
+                {
+                    // only buffer important messages
+                    if (data.ResponseType != Response.Progress)
+                        receivedBuffer.Add(data);
+                }
+
+                // checks if we're still buffering responses, if so don't process it now
+                if (BufferResponse)
+                    return;
+            }
+
+            ProcessReceivedMessage(data);
+        }
+
+        void ProcessReceivedMessage(UpdateHelperData data)
+        {
             if (data.Action == UpdateAction.GetwyUpdateProcessID)
             {
                 ClientProcess = Process.GetProcessById(data.ProcessID);

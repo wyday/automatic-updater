@@ -616,13 +616,6 @@ namespace wyDay.Controls
 
         void auBackend_BeforeChecking(object sender, BeforeArgs e)
         {
-            // call this function from ownerForm's thread context
-            if (sender != null)
-            {
-                ownerForm.Dispatcher.Invoke(DispatcherPriority.Normal, new BeforeHandler(auBackend_BeforeChecking), null, e);
-                return;
-            }
-
             // disable any scheduled checking
             tmrWaitBeforeCheck.Enabled = false;
 
