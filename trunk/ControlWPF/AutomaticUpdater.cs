@@ -1205,12 +1205,11 @@ namespace wyDay.Controls
             CurrMenuType = NewMenuType;
         }
 
-
         void tmrWaitBeforeCheck_Tick(object sender, EventArgs e)
         {
+            Visibility = Visibility.Hidden;
             auBackend.ForceCheckForUpdate(false);
         }
-
 
         /// <summary>
         /// Check for updates forcefully.

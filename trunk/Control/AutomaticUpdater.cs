@@ -1230,6 +1230,7 @@ namespace wyDay.Controls
 
         void tmrWaitBeforeCheck_Tick(object sender, EventArgs e)
         {
+            Visible = false;
             auBackend.ForceCheckForUpdate(false);
         }
 
