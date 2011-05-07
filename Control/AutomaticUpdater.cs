@@ -23,7 +23,7 @@ namespace wyDay.Controls
     [ToolboxBitmapAttribute(typeof(AutomaticUpdater), "update-notify.png")]
     public class AutomaticUpdater : ContainerControl, ISupportInitialize
     {
-        readonly AutomaticUpdaterBackend auBackend;
+        readonly AutomaticUpdaterBackend auBackend = new AutomaticUpdaterBackend(true) { UseCloseAppNow = true };
 
         Form ownerForm;
 
@@ -162,7 +162,11 @@ namespace wyDay.Controls
         [Description("The arguments to pass to your app when it's being restarted after an update."),
         DefaultValue(null),
         Category("Updater")]
-        public string Arguments { get; set; }
+        public string Arguments
+        {
+            get { return auBackend.Arguments; }
+            set { auBackend.Arguments = value; }
+        }
 
         /// <summary>
         /// Gets the changes for the new update.
@@ -407,8 +411,6 @@ namespace wyDay.Controls
         /// </summary>
         public AutomaticUpdater()
         {
-            auBackend = new AutomaticUpdaterBackend(true) {UseApplicationExit = true};
-
             // This turns on double buffering of all custom GDI+ drawing
             SetStyle(ControlStyles.AllPaintingInWmPaint
                 | ControlStyles.SupportsTransparentBackColor
@@ -461,6 +463,8 @@ namespace wyDay.Controls
 
             auBackend.ClosingAborted += auBackend_ClosingAborted;
             auBackend.UpdateStepMismatch += auBackend_UpdateStepMismatch;
+
+            auBackend.CloseAppNow += auBackend_CloseAppNow;
         }
 
         /// <summary>
@@ -472,6 +476,19 @@ namespace wyDay.Controls
         {
             ownerForm = parentControl;
             ownerForm.Load += ownerForm_Load;
+        }
+
+        void auBackend_CloseAppNow(object sender, EventArgs e)
+        {
+            // call this function from ownerForm's thread context
+            if (sender != null)
+            {
+                ownerForm.Invoke(new EventHandler(auBackend_CloseAppNow), new object[] { null, e });
+                return;
+            }
+
+            // close this application so it can be updated
+            Application.Exit();
         }
 
         void auBackend_UpToDate(object sender, SuccessArgs e)

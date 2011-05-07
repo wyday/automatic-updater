@@ -24,7 +24,7 @@ namespace wyDay.Controls
             ForegroundProperty = TextElement.ForegroundProperty.AddOwner(typeof(AutomaticUpdater), new FrameworkPropertyMetadata(SystemColors.ControlTextBrush, FrameworkPropertyMetadataOptions.Inherits));
         }
 
-        readonly AutomaticUpdaterBackend auBackend = new AutomaticUpdaterBackend();
+        readonly AutomaticUpdaterBackend auBackend = new AutomaticUpdaterBackend { UseCloseAppNow = true };
 
         Window ownerForm;
 
@@ -150,7 +150,11 @@ namespace wyDay.Controls
         [Description("The arguments to pass to your app when it's being restarted after an update."),
         DefaultValue(null),
         Category("Updater")]
-        public string Arguments { get; set; }
+        public string Arguments
+        {
+            get { return auBackend.Arguments; }
+            set { auBackend.Arguments = value; }
+        }
 
         /// <summary>
         /// Gets the changes for the new update.
