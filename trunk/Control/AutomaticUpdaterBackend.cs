@@ -249,19 +249,15 @@ namespace wyDay.Controls
         /// </summary>
         public string ServiceName { get; set; }
 
-#if WPF
         /// <summary>
         /// When this event is called you should shutdown the application immediately.
         /// </summary>
         public event EventHandler CloseAppNow;
-#else
-        bool RestartInfoSent;
 
         /// <summary>
-        /// Gets or sets whether the Application.Exit() function should be called (set to true for GUI apps).
+        /// Gets or sets whether to call the CloseAppNow event where you can close the application or to just call Environment.Exit(0).
         /// </summary>
-        public bool UseApplicationExit { get; set; }
-#endif
+        public bool UseCloseAppNow { get; set; }
 
         #endregion
 
@@ -270,10 +266,6 @@ namespace wyDay.Controls
         /// </summary>
         public AutomaticUpdaterBackend()
         {
-#if !WPF
-            Application.ApplicationExit += Application_ApplicationExit;
-#endif
-
             updateHelper.ProgressChanged += updateHelper_ProgressChanged;
             updateHelper.PipeServerDisconnected += updateHelper_PipeServerDisconnected;
             updateHelper.UpdateStepMismatch += updateHelper_UpdateStepMismatch;
@@ -549,21 +541,15 @@ namespace wyDay.Controls
                             break;
                         case UpdateStep.RestartInfo:
 
-#if WPF
-                            // show client & send the "begin update" message
-                            updateHelper.InstallNow();
-
                             // close this application so it can be updated
-                            if (CloseAppNow != null)
-                                CloseAppNow(this, EventArgs.Empty);
-#else
-                            RestartInfoSent = true;
-
-                            // close this application so it can be updated
-                            if (UseApplicationExit)
+                            if (UseCloseAppNow)
                             {
-                                // Use this since we are a WinForms app
-                                Application.Exit();
+                                // show client & send the "begin update" message
+                                updateHelper.InstallNow();
+
+                                // close this application so it can be updated
+                                if (CloseAppNow != null)
+                                    CloseAppNow(this, EventArgs.Empty);
                             }
                             else
                             {
@@ -573,7 +559,6 @@ namespace wyDay.Controls
                                 // Use this since we are a console app (or Windows service)
                                 Environment.Exit(0);
                             }
-#endif
                             return;
                     }
 
@@ -589,17 +574,6 @@ namespace wyDay.Controls
                     break;
             }
         }
-
-#if !WPF
-        void Application_ApplicationExit(object sender, EventArgs e)
-        {
-            if (RestartInfoSent)
-            {
-                // show client & send the "begin update" message
-                updateHelper.InstallNow();
-            }
-        }
-#endif
 
         void StartNextStep(UpdateStep updateStepOn)
         {
