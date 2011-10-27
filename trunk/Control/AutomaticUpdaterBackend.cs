@@ -347,7 +347,7 @@ namespace wyDay.Controls
         }
 
         /// <summary>
-        /// Check for updates forcefully.
+        /// Check for updates forcefully -- returns true if the updating has begun. Use the "CheckingFailed", "UpdateAvailable", or "UpToDate" events for the result.
         /// </summary>
         /// <param name="recheck">Recheck with the servers regardless of cached updates, etc.</param>
         /// <returns>Returns true if checking has begun, false otherwise.</returns>
@@ -386,7 +386,7 @@ namespace wyDay.Controls
         }
 
         /// <summary>
-        /// Check for updates forcefully.
+        /// Check for updates forcefully -- returns true if the updating has begun. Use the "CheckingFailed", "UpdateAvailable", or "UpToDate" events for the result.
         /// </summary>
         /// <returns>Returns true if checking has begun, false otherwise.</returns>
         public bool ForceCheckForUpdate()
