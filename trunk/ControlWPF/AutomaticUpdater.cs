@@ -145,6 +145,14 @@ namespace wyDay.Controls
         #region Properties
 
         /// <summary>
+        /// Gets or sets whether to slide the AutomaticUpdater out when you hover over it and in when you hover away.
+        /// </summary>
+        [Description("Whether to slide the AutomaticUpdater out when you hover over it and in when you hover away."),
+        DefaultValue(true),
+        Category("Updater")]
+        public bool Animate { get; set; }
+
+        /// <summary>
         /// Gets or sets the arguments to pass to your app when it's being restarted after an update.
         /// </summary>
         [Description("The arguments to pass to your app when it's being restarted after an update."),
@@ -392,6 +400,8 @@ namespace wyDay.Controls
 
         public AutomaticUpdater()
         {
+            Animate = true;
+
             // Create the interop host control.
             System.Windows.Forms.Integration.WindowsFormsHost host = new System.Windows.Forms.Integration.WindowsFormsHost
                                                                          {
@@ -557,7 +567,8 @@ namespace wyDay.Controls
             tmrCollapse.Enabled = false;
 
             // animate this open
-            BeginAniOpen();
+            if (Animate)
+                BeginAniOpen();
 
             AnimateImage(Properties.Resources.update_notify, true);
 
@@ -588,7 +599,8 @@ namespace wyDay.Controls
             tmrCollapse.Enabled = false;
 
             // animate this open
-            BeginAniOpen();
+            if (Animate)
+                BeginAniOpen();
 
             AnimateImage(Properties.Resources.info, true);
 
@@ -824,7 +836,7 @@ namespace wyDay.Controls
         {
             insideChildControl = false;
 
-            if (!insideSelf && isFullExpanded && !contextMenu.IsOpen)
+            if (Animate && !insideSelf && isFullExpanded && !contextMenu.IsOpen)
                 tmrCollapse.Enabled = true;
         }
 
@@ -832,20 +844,26 @@ namespace wyDay.Controls
         {
             insideChildControl = true;
 
-            tmrCollapse.Enabled = false;
+            if (Animate)
+            {
+                tmrCollapse.Enabled = false;
 
-            if (!isFullExpanded)
-                BeginAniOpen();
+                if (!isFullExpanded)
+                    BeginAniOpen();
+            }
         }
 
         protected override void OnMouseEnter(MouseEventArgs e)
         {
             insideSelf = true;
 
-            tmrCollapse.Enabled = false;
+            if (Animate)
+            {
+                tmrCollapse.Enabled = false;
 
-            if (!isFullExpanded)
-                BeginAniOpen();
+                if (!isFullExpanded)
+                    BeginAniOpen();
+            }
 
             base.OnMouseEnter(e);
         }
@@ -854,7 +872,7 @@ namespace wyDay.Controls
         {
             insideSelf = false;
 
-            if (!insideChildControl && isFullExpanded && !contextMenu.IsOpen)
+            if (Animate && !insideChildControl && isFullExpanded && !contextMenu.IsOpen)
                 tmrCollapse.Enabled = true;
 
             base.OnMouseLeave(e);
@@ -915,9 +933,9 @@ namespace wyDay.Controls
 
         void tmrAniExpandCollapse_Tick(object sender, EventArgs e)
         {
-            if (startSize - Width + sizeChange == 0)
+            if (startSize - (int)Width + sizeChange == 0)
             {
-                isFullExpanded = Width != collapsedWidth;
+                isFullExpanded = (int)Width != collapsedWidth;
 
                 //enable the collapse timer
                 if (isFullExpanded && !insideChildControl && !insideSelf && !contextMenu.IsOpen)
@@ -1216,7 +1234,7 @@ namespace wyDay.Controls
         }
 
         /// <summary>
-        /// Check for updates forcefully.
+        /// Check for updates forcefully -- returns true if the updating has begun. Use the "CheckingFailed", "UpdateAvailable", or "UpToDate" events for the result.
         /// </summary>
         /// <param name="recheck">Recheck with the servers regardless of cached updates, etc.</param>
         /// <returns>Returns true if checking has begun, false otherwise.</returns>
@@ -1240,7 +1258,7 @@ namespace wyDay.Controls
         }
 
         /// <summary>
-        /// Check for updates forcefully.
+        /// Check for updates forcefully -- returns true if the updating has begun. Use the "CheckingFailed", "UpdateAvailable", or "UpToDate" events for the result.
         /// </summary>
         /// <returns>Returns true if checking has begun, false otherwise.</returns>
         public bool ForceCheckForUpdate()
@@ -1253,11 +1271,14 @@ namespace wyDay.Controls
             // create the "hide" menu
             CreateMenu(menuType);
 
-            // temporarily diable the collapse timer
-            tmrCollapse.Enabled = false;
+            if (Animate)
+            {
+                // temporarily diable the collapse timer
+                tmrCollapse.Enabled = false;
 
-            // animate this open
-            BeginAniOpen();
+                // animate this open
+                BeginAniOpen();
+            }
 
             AnimateImage(Properties.Resources.tick, true);
         }
@@ -1267,11 +1288,14 @@ namespace wyDay.Controls
             if (forceShow && !KeepHidden)
                 Visibility = Visibility.Visible;
 
-            // temporarily diable the collapse timer
-            tmrCollapse.Enabled = false;
+            if (Animate)
+            {
+                // temporarily diable the collapse timer
+                tmrCollapse.Enabled = false;
 
-            // animate this open
-            BeginAniOpen();
+                // animate this open
+                BeginAniOpen();
+            }
 
             AnimateImage(Properties.Resources.update_working, false);
         }
@@ -1317,7 +1341,7 @@ namespace wyDay.Controls
 
         void AutomaticUpdater_SizeChanged(object sender, SizeChangedEventArgs e)
         {
-            if (DesignMode)
+            if (DesignMode && Animate)
             {
                 Width = 16;
                 Height = 16;
@@ -1348,7 +1372,7 @@ namespace wyDay.Controls
         void contextMenu_Closed(object sender, RoutedEventArgs e)
         {
             //begin collapsing the update helper
-            if (isFullExpanded || tmrAniExpandCollapse.Enabled)
+            if (Animate && (isFullExpanded || tmrAniExpandCollapse.Enabled))
                 tmrCollapse.Enabled = true;
         }
 
