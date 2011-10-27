@@ -6,12 +6,12 @@
         internal const string C_PrematureExitMessage = "wyUpdate ended before the current update step could be completed.";
 
 #if WPF
-        // wpf menus require underscores for hint characters
-        string m_CheckForUpdatesMenu = "_Check for updates";
-        string m_DownloadUpdateMenu = "_Download and Update now";
-        string m_InstallUpdateMenu = "_Install update now";
-        string m_CancelUpdatingMenu = "_Cancel updating";
-        string m_CancelCheckingMenu = "_Cancel update checking";
+        // wpf menus require underscores for hint characters (not working, look into this)
+        string m_CheckForUpdatesMenu = "Check for updates";
+        string m_DownloadUpdateMenu = "Download and Update now";
+        string m_InstallUpdateMenu = "Install update now";
+        string m_CancelUpdatingMenu = "Cancel updating";
+        string m_CancelCheckingMenu = "Cancel update checking";
 #else
         string m_CheckForUpdatesMenu = "&Check for updates";
         string m_DownloadUpdateMenu = "&Download and Update now";
