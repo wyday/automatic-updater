@@ -13,7 +13,13 @@ namespace wyDay.Controls
     {
         public override SelectionRules SelectionRules
         {
-            get { return base.SelectionRules & ~(SelectionRules.AllSizeable); }
+            get
+            {
+                if (!((AutomaticUpdater)Control).Animate)
+                    return base.SelectionRules;
+
+                return base.SelectionRules & ~(SelectionRules.AllSizeable);
+            }
         }
 
 #if NET_2_0
