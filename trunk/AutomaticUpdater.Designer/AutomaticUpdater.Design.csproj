@@ -53,6 +53,12 @@
       <LastGenOutput>Resource.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Control4\AutomaticUpdater4.csproj">
+      <Project>{288861CB-94D3-4068-96BD-6831C3ED25B6}</Project>
+      <Name>AutomaticUpdater4</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>IF NOT EXIST "$(SolutionDir)..\..\Signing\SignMe.exe" GOTO done
