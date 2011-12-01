@@ -1480,8 +1480,7 @@ namespace wyDay.Controls
                 if (!KeepHidden)
                     Show();
             }
-
-            if (auBackend.UpdateType != UpdateType.DoNothing)
+            else if (auBackend.UpdateType != UpdateType.DoNothing) // UpdateStepOn == UpdateStepOn.Nothing
             {
                 // see if enough days have elapsed since last check.
                 TimeSpan span = DateTime.Now.Subtract(auBackend.LastCheckDate);
