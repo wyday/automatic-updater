@@ -50,7 +50,7 @@ namespace wyDay.Controls
         PipeClient pipeClient;
 
 
-        readonly BackgroundWorker bw = new BackgroundWorker();
+        BackgroundWorker bw;
 
         public event UpdateStepMismatchHandler UpdateStepMismatch;
         public event ResponseHandler ProgressChanged;
@@ -97,9 +97,6 @@ namespace wyDay.Controls
             catch { }
 
             CreateNewPipeClient();
-
-            bw.DoWork += bw_DoWork;
-            bw.RunWorkerCompleted += bw_RunWorkerCompleted;
         }
 
         void CreateNewPipeClient()
@@ -246,6 +243,11 @@ namespace wyDay.Controls
 
         void bw_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
+            bw.DoWork -= bw_DoWork;
+            bw.RunWorkerCompleted -= bw_RunWorkerCompleted;
+            bw.Dispose();
+            bw = null;
+
             // error occurs when a message fails to send or wyUpdate fails to start
             if (e.Error != null)
             {
@@ -273,6 +275,8 @@ namespace wyDay.Controls
                 // process the next in stack
                 if (sendBuffer.Count > 0)
                 {
+                    RecreateBackgroundWorker();
+
                     UpdateHelperData uhd = sendBuffer.Pop();
                     UpdateStep = uhd.UpdateStep;
 
@@ -341,15 +345,26 @@ namespace wyDay.Controls
             SendAsync(new UpdateHelperData(UpdateAction.Cancel));
         }
 
+        void RecreateBackgroundWorker()
+        {
+            // Fixes windows service bugs: http://wyday.com/forum/viewtopic.php?f=1&t=2949
+            Application.DoEvents();
+            bw = new BackgroundWorker();
+            bw.DoWork += bw_DoWork;
+            bw.RunWorkerCompleted += bw_RunWorkerCompleted;
+        }
+
         void SendAsync(UpdateHelperData uhd)
         {
             // if currently working, add the new message to the stack
-            if (bw.IsBusy)
+            if (bw != null)
             {
                 sendBuffer.Push(uhd);
             }
             else
             {
+                RecreateBackgroundWorker();
+
                 // process immediately
                 UpdateStep = uhd.UpdateStep == UpdateStep.ForceRecheckForUpdate ? UpdateStep.CheckForUpdate : uhd.UpdateStep;
 
