@@ -397,7 +397,10 @@ namespace wyDay.Controls
         void InstallPendingUpdate()
         {
             // send the client the arguments that need to run on success and failure
-            updateHelper.RestartInfo(ServiceName ?? Application.ExecutablePath, AutoUpdaterInfo.AutoUpdateID, Arguments, ServiceName != null);
+            if (ServiceName != null)
+                updateHelper.RestartInfo(ServiceName, AutoUpdaterInfo.AutoUpdateID, Arguments, true);
+            else
+                updateHelper.RestartInfo(Application.ExecutablePath, AutoUpdaterInfo.AutoUpdateID, Arguments, false);
         }
 
         void DownloadUpdate()
