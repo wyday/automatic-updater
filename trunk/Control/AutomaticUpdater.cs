@@ -298,7 +298,7 @@ namespace wyDay.Controls
             set
             {
                 if (value == null)
-                    throw new ArgumentNullException();
+                    throw new ArgumentNullException("value", "No translation present.");
 
                 translation = value;
             }
