@@ -8,7 +8,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyDescription("AutomaticUpdater.Design")]
 [assembly: AssemblyCompany("wyDay")]
 [assembly: AssemblyProduct("AutomaticUpdater.Design")]
-[assembly: AssemblyCopyright("Copyright © 2005-2011 wyDay")]
+[assembly: AssemblyCopyright("Copyright © 2005-2012 wyDay")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
