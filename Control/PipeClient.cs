@@ -11,9 +11,9 @@ namespace wyDay.Controls
     /// </summary>
     public class PipeClient
     {
-        [DllImport("kernel32.dll", SetLastError = true)]
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, CallingConvention = CallingConvention.StdCall, SetLastError = true)]
         static extern SafeFileHandle CreateFile(
-           String pipeName,
+           string pipeName,
            uint dwDesiredAccess,
            uint dwShareMode,
            IntPtr lpSecurityAttributes,
