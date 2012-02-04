@@ -52,6 +52,11 @@ namespace wyDay.Controls
         public event FailHandler CheckingFailed;
 
         /// <summary>
+        /// Event is raised after you or your user invoked InstallNow(). You should close your app as quickly as possible (because wyUpdate will be waiting).
+        /// </summary>
+        public event EventHandler CloseAppNow;
+
+        /// <summary>
         /// Event is raised when an update can't be installed and the closing is aborted.
         /// </summary>
         public event EventHandler ClosingAborted;
@@ -248,16 +253,6 @@ namespace wyDay.Controls
         /// Gets or sets the service to start after the update.
         /// </summary>
         public string ServiceName { get; set; }
-
-        /// <summary>
-        /// When this event is called you should shutdown the application immediately.
-        /// </summary>
-        public event EventHandler CloseAppNow;
-
-        /// <summary>
-        /// Gets or sets whether to call the CloseAppNow event where you can close the application or to just call Environment.Exit(0).
-        /// </summary>
-        public bool UseCloseAppNow { get; set; }
 
         #endregion
 
@@ -544,24 +539,16 @@ namespace wyDay.Controls
                             break;
                         case UpdateStep.RestartInfo:
 
+                            // show client & send the "begin update" message
+                            updateHelper.InstallNow();
+
                             // close this application so it can be updated
-                            if (UseCloseAppNow)
-                            {
-                                // show client & send the "begin update" message
-                                updateHelper.InstallNow();
-
-                                // close this application so it can be updated
-                                if (CloseAppNow != null)
-                                    CloseAppNow(this, EventArgs.Empty);
-                            }
+                            // use either the custom handler or Environment.Exit();
+                            if (CloseAppNow != null)
+                                CloseAppNow(this, EventArgs.Empty);
                             else
-                            {
-                                // show client & send the "begin update" message
-                                updateHelper.InstallNow();
-
-                                // Use this since we are a console app (or Windows service)
                                 Environment.Exit(0);
-                            }
+
                             return;
                     }
 

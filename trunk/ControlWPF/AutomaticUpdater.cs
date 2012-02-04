@@ -24,7 +24,7 @@ namespace wyDay.Controls
             ForegroundProperty = TextElement.ForegroundProperty.AddOwner(typeof(AutomaticUpdater), new FrameworkPropertyMetadata(SystemColors.ControlTextBrush, FrameworkPropertyMetadataOptions.Inherits));
         }
 
-        readonly AutomaticUpdaterBackend auBackend = new AutomaticUpdaterBackend { UseCloseAppNow = true };
+        readonly AutomaticUpdaterBackend auBackend = new AutomaticUpdaterBackend();
 
         Window ownerForm;
 
@@ -83,6 +83,13 @@ namespace wyDay.Controls
         [Description("Event is raised when the checking for updates fails."),
         Category("Updater")]
         public event FailHandler CheckingFailed;
+
+        /// <summary>
+        /// Event is raised after you or your user invoked InstallNow(). You should close your app as quickly as possible (because wyUpdate will be waiting).
+        /// </summary>
+        [Description("Event is raised after you or your user invoked InstallNow(). You should close your app as quickly as possible (because wyUpdate will be waiting)."),
+        Category("Updater")]
+        public event EventHandler CloseAppNow;
 
         /// <summary>
         /// Event is raised when an update can't be installed and the closing is aborted.
@@ -482,7 +489,10 @@ namespace wyDay.Controls
             }
 
             // close this application so it can be updated
-            Application.Current.Shutdown();
+            if (CloseAppNow != null)
+                CloseAppNow(this, EventArgs.Empty);
+            else
+                Application.Current.Shutdown();
         }
 
         void auBackend_UpToDate(object sender, SuccessArgs e)
