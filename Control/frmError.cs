@@ -15,7 +15,11 @@ namespace wyDay.Controls
 
             InitializeComponent();
 
-            richError.Text = failArgs.ErrorMessage;
+            // Don't show the extended error information textbox if there is no extended error info.
+            if (!string.IsNullOrEmpty(failArgs.ErrorMessage))
+                richError.Text = failArgs.ErrorMessage;
+            else
+                richError.Visible = false;
 
             Text = translation.ErrorTitle;
             btnOK.Text = translation.CloseButton;
@@ -31,6 +35,12 @@ namespace wyDay.Controls
         protected override void OnLayout(LayoutEventArgs levent)
         {
             base.OnLayout(levent);
+
+            if (lblTitle != null)
+            {
+                lblTitle.Width = ClientRectangle.Width - 2 * lblTitle.Left;
+                richError.Top = lblTitle.Bottom + 5;
+            }
 
             // resize the textbox to fill the form
             if (richError != null)

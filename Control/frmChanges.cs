@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
 
@@ -41,6 +40,12 @@ namespace wyDay.Controls
         {
             base.OnLayout(levent);
 
+            if (lblTitle != null)
+            {
+                lblTitle.Width = ClientRectangle.Width - 2 * lblTitle.Left;
+                richChanges.Top = lblTitle.Bottom + 5;
+            }
+
             // resize the textbox to fill the form
             if (richChanges != null)
             {
@@ -49,17 +54,12 @@ namespace wyDay.Controls
             }
         }
 
-        private void btnOK_Click(object sender, EventArgs e)
+        void btnOK_Click(object sender, EventArgs e)
         {
             Close();
         }
 
-        private void richChanges_LinkClicked(object sender, string link)
-        {
-            System.Diagnostics.Process.Start(link);
-        }
-
-        private void btnUpdateNow_Click(object sender, EventArgs e)
+        void btnUpdateNow_Click(object sender, EventArgs e)
         {
             UpdateNow = true;
             Close();

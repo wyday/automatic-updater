@@ -84,6 +84,9 @@
     </Compile>
     <Compile Include="GUIDEditor.cs" />
     <Compile Include="MenuType.cs" />
+    <Compile Include="MLLabel.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="PipeClient.cs" />
     <Compile Include="AutomaticUpdater.cs">
       <SubType>Component</SubType>
