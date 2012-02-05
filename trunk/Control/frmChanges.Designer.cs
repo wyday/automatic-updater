@@ -29,7 +29,7 @@
         private void InitializeComponent()
         {
             this.btnOK = new System.Windows.Forms.Button();
-            this.lblTitle = new System.Windows.Forms.Label();
+            this.lblTitle = new wyDay.Controls.MLLabel();
             this.richChanges = new wyDay.Controls.RichTextBoxEx();
             this.btnUpdateNow = new System.Windows.Forms.Button();
             this.SuspendLayout();
@@ -105,7 +105,7 @@
 
         private wyDay.Controls.RichTextBoxEx richChanges;
         private System.Windows.Forms.Button btnOK;
-        private System.Windows.Forms.Label lblTitle;
+        private wyDay.Controls.MLLabel lblTitle;
         private System.Windows.Forms.Button btnUpdateNow;
 
     }

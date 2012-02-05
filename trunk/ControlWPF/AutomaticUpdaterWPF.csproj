@@ -87,6 +87,9 @@
     <Compile Include="..\Control\MenuType.cs">
       <Link>MenuType.cs</Link>
     </Compile>
+    <Compile Include="..\Control\MLLabel.cs">
+      <Link>MLLabel.cs</Link>
+    </Compile>
     <Compile Include="..\Control\PipeClient.cs">
       <Link>PipeClient.cs</Link>
     </Compile>
