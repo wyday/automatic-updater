@@ -98,6 +98,7 @@
     </Compile>
     <Compile Include="..\Control\MLLabel.cs">
       <Link>MLLabel.cs</Link>
+      <SubType>Component</SubType>
     </Compile>
     <Compile Include="..\Control\PipeClient.cs">
       <Link>PipeClient.cs</Link>

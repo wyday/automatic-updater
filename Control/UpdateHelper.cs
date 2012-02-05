@@ -11,7 +11,7 @@ using wyUpdate.Common;
 
 namespace wyDay.Controls
 {
-    internal class UpdateHelper
+    internal class UpdateHelper : IDisposable
     {
         // Constants
         const int MaxSendRetries = 20;
@@ -67,6 +67,65 @@ namespace wyDay.Controls
         readonly Stack<UpdateHelperData> sendBuffer = new Stack<UpdateHelperData>(1);
         readonly List<UpdateHelperData> receivedBuffer = new List<UpdateHelperData>();
         public bool BufferResponse;
+
+        #region Dispose
+
+        /// <summary>Indicates whether this instance is disposed.</summary>
+        private bool isDisposed;
+
+        /// <summary>
+        /// Finalizes an instance of the <see cref="UpdateHelper"/> class.
+        /// Releases unmanaged resources and performs other cleanup operations before the
+        /// <see cref="UpdateHelper"/> is reclaimed by garbage collection.
+        /// </summary>
+        ~UpdateHelper()
+        {
+            Dispose(false);
+        }
+
+            /// <summary>
+        /// Releases unmanaged and - optionally - managed resources.
+        /// </summary>
+        /// <param name="disposing">Result: <c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!isDisposed)
+            {
+                // Not already disposed ?
+                if (disposing)
+                {
+                    // dispose managed resources
+                    // Not already disposed ?
+                    if (pipeClient != null)
+                    {
+                        pipeClient.Dispose(); // Dispose it
+                        pipeClient = null; // Its now inaccessible
+                    }
+                    if (bw != null)
+                    {
+                        bw.Dispose(); // Dispose it
+                        bw = null; // Its now inaccessible
+                    }
+                }
+
+                // free unmanaged resources
+                // Set large fields to null.
+
+                // Instance is disposed
+                isDisposed = true;
+            }
+        }
+
+        /// <summary>
+        /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
+        /// </summary>
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        #endregion
 
         public void FlushResponses()
         {

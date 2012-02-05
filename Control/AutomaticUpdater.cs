@@ -23,7 +23,7 @@ namespace wyDay.Controls
     [ToolboxBitmapAttribute(typeof(AutomaticUpdater), "update-notify.png")]
     public class AutomaticUpdater : ContainerControl, ISupportInitialize
     {
-        readonly AutomaticUpdaterBackend auBackend = new AutomaticUpdaterBackend(true);
+        AutomaticUpdaterBackend auBackend = new AutomaticUpdaterBackend(true);
 
         Form ownerForm;
 
@@ -415,6 +415,36 @@ namespace wyDay.Controls
                 Height = Math.Max(16, Font.Height);
 
             base.OnSizeChanged(e);
+        }
+
+        #endregion
+
+        #region Dispose
+
+        /// <summary>
+        /// Clean up any resources being used.
+        /// </summary>
+        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+        protected override void Dispose(bool disposing)
+        {
+            // Not already disposed ?
+            if (disposing)
+            {
+                // Not already disposed ?
+                if (auBackend != null)
+                {
+                    auBackend.Dispose(); // Dispose it
+                    auBackend = null; // Its now inaccessible
+                }
+
+                if (backBrush != null)
+                {
+                    backBrush.Dispose(); // Dispose it
+                    backBrush = null; // Its now inaccessible
+                }
+            }
+
+            base.Dispose(disposing);
         }
 
         #endregion
