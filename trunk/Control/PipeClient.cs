@@ -21,26 +21,17 @@ namespace wyDay.Controls
            uint dwFlagsAndAttributes,
            IntPtr hTemplate);
 
-        /// <summary>
-        /// Handles messages received from a server pipe
-        /// </summary>
+        /// <summary>Handles messages received from a server pipe</summary>
         /// <param name="message">The byte message received</param>
         public delegate void MessageReceivedHandler(byte[] message);
 
-        /// <summary>
-        /// Event is called whenever a message is received from the server pipe
-        /// </summary>
+        /// <summary>Event is called whenever a message is received from the server pipe</summary>
         public event MessageReceivedHandler MessageReceived;
 
-
-        /// <summary>
-        /// Handles server disconnected messages
-        /// </summary>
+        /// <summary>Handles server disconnected messages</summary>
         public delegate void ServerDisconnectedHandler();
 
-        /// <summary>
-        /// Event is called when the server pipe is severed.
-        /// </summary>
+        /// <summary>Event is called when the server pipe is severed.</summary>
         public event ServerDisconnectedHandler ServerDisconnected;
 
         const int BUFFER_SIZE = 4096;
@@ -49,21 +40,15 @@ namespace wyDay.Controls
         SafeFileHandle handle;
         Thread readThread;
 
-        /// <summary>
-        /// Is this client connected to a server pipe
-        /// </summary>
+        /// <summary>Gets if this client connected to a server pipe.</summary>
         public bool Connected { get; private set; }
 
-        /// <summary>
-        /// The pipe this client is connected to
-        /// </summary>
+        /// <summary>The pipe this client is connected to.</summary>
         public string PipeName { get; private set; }
 
         #region Dispose
 
-        /// <summary>
-        /// Indicates whether this instance is disposed.
-        /// </summary>
+        /// <summary>Indicates whether this instance is disposed.</summary>
         bool isDisposed;
 
         /// <summary>
@@ -86,20 +71,7 @@ namespace wyDay.Controls
                 if (disposing)
                 {
                     // dispose managed resources
-                    // Not already disposed ?
-                    if (stream != null)
-                    {
-                        Connected = false;
-                        stream.Dispose(); // Dispose it
-                        stream = null; // Its now inaccessible
-                    }
-
-                    if (handle != null)
-                    {
-                        Connected = false;
-                        handle.Dispose();
-                        handle = null;
-                    }
+                    Disconnect();
                 }
 
                 // free unmanaged resources
@@ -110,9 +82,7 @@ namespace wyDay.Controls
             }
         }
 
-        /// <summary>
-        /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
-        /// </summary>
+        /// <summary>Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.</summary>
         public void Dispose()
         {
             Dispose(true);
@@ -121,9 +91,7 @@ namespace wyDay.Controls
 
         #endregion
 
-        /// <summary>
-        /// Connects to the server with a pipename.
-        /// </summary>
+        /// <summary>Connects to the server with a pipename.</summary>
         /// <param name="pipename">The name of the pipe to connect to.</param>
         public void Connect(string pipename)
         {
@@ -156,9 +124,7 @@ namespace wyDay.Controls
             readThread.Start();
         }
 
-        /// <summary>
-        /// Disconnects from the server.
-        /// </summary>
+        /// <summary>Disconnects from the server.</summary>
         public void Disconnect()
         {
             if (!Connected)
@@ -170,8 +136,8 @@ namespace wyDay.Controls
 
             //clean up resource
             if (stream != null)
-                stream.Close();
-            handle.Close();
+                stream.Dispose();
+            handle.Dispose();
 
             stream = null;
             handle = null;
@@ -232,8 +198,8 @@ namespace wyDay.Controls
             if (Connected)
             {
                 //clean up resource
-                stream.Close();
-                handle.Close();
+                stream.Dispose();
+                handle.Dispose();
 
                 stream = null;
                 handle = null;
