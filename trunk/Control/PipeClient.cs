@@ -9,7 +9,7 @@ namespace wyDay.Controls
     /// <summary>
     /// Allow pipe communication between a server and a client
     /// </summary>
-    public class PipeClient
+    public class PipeClient : IDisposable
     {
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode, CallingConvention = CallingConvention.StdCall, SetLastError = true)]
         static extern SafeFileHandle CreateFile(
@@ -58,6 +58,68 @@ namespace wyDay.Controls
         /// The pipe this client is connected to
         /// </summary>
         public string PipeName { get; private set; }
+
+        #region Dispose
+
+        /// <summary>
+        /// Indicates whether this instance is disposed.
+        /// </summary>
+        bool isDisposed;
+
+        /// <summary>
+        /// Finalizes an instance of the <see cref="PipeClient"/> class.
+        /// Releases unmanaged resources and performs other cleanup operations before the
+        /// <see cref="PipeClient"/> is reclaimed by garbage collection.
+        /// </summary>
+        ~PipeClient()
+        {
+            Dispose(false);
+        }
+
+        /// <summary>Releases unmanaged and - optionally - managed resources.</summary>
+        /// <param name="disposing">Result: <c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!isDisposed)
+            {
+                // Not already disposed ?
+                if (disposing)
+                {
+                    // dispose managed resources
+                    // Not already disposed ?
+                    if (stream != null)
+                    {
+                        Connected = false;
+                        stream.Dispose(); // Dispose it
+                        stream = null; // Its now inaccessible
+                    }
+
+                    if (handle != null)
+                    {
+                        Connected = false;
+                        handle.Dispose();
+                        handle = null;
+                    }
+                }
+
+                // free unmanaged resources
+                // Set large fields to null.
+
+                // Instance is disposed
+                isDisposed = true;
+            }
+        }
+
+        /// <summary>
+        /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
+        /// </summary>
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        #endregion
 
         /// <summary>
         /// Connects to the server with a pipename.

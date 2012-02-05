@@ -404,7 +404,6 @@ namespace wyDay.Controls
         
         #endregion
 
-
         public AutomaticUpdater()
         {
             Animate = true;

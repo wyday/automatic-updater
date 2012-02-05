@@ -8,11 +8,11 @@ namespace wyDay.Controls
     /// <summary>
     /// Backend for the AutomaticUpdater control.
     /// </summary>
-    public class AutomaticUpdaterBackend
+    public class AutomaticUpdaterBackend : IDisposable
     {
         AutoUpdaterInfo AutoUpdaterInfo;
 
-        readonly UpdateHelper updateHelper = new UpdateHelper();
+        UpdateHelper updateHelper = new UpdateHelper();
 
         UpdateStepOn m_UpdateStepOn;
 
@@ -253,6 +253,62 @@ namespace wyDay.Controls
         /// Gets or sets the service to start after the update.
         /// </summary>
         public string ServiceName { get; set; }
+
+        #endregion
+
+        #region Dispose
+
+        /// <summary>
+        /// Indicates whether this instance is disposed.
+        /// </summary>
+        private bool isDisposed;
+
+        /// <summary>
+        /// Finalizes an instance of the <see cref="AutomaticUpdaterBackend"/> class.
+        /// Releases unmanaged resources and performs other cleanup operations before the
+        /// <see cref="AutomaticUpdaterBackend"/> is reclaimed by garbage collection.
+        /// </summary>
+        ~AutomaticUpdaterBackend()
+        {
+            Dispose(false);
+        }
+
+        /// <summary>
+        /// Releases unmanaged and - optionally - managed resources.
+        /// </summary>
+        /// <param name="disposing">Result: <c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!isDisposed)
+            {
+                // Not already disposed ?
+                if (disposing)
+                {
+                    // dispose managed resources
+                    // Not already disposed ?
+                    if (updateHelper != null)
+                    {
+                        updateHelper.Dispose(); // Dispose it
+                        updateHelper = null; // Its now inaccessible
+                    }
+                }
+
+                // free unmanaged resources
+                // Set large fields to null.
+
+                // Instance is disposed
+                isDisposed = true;
+            }
+        }
+
+        /// <summary>
+        /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
+        /// </summary>
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
 
         #endregion
 
