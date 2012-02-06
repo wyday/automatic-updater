@@ -177,7 +177,6 @@ namespace wyDay.Controls
                             bytesRead += numBytes;
 
                         } while (bytesRead < totalSize);
-
                     }
                     catch
                     {
