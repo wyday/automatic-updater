@@ -110,17 +110,17 @@ namespace wyDay.Controls
                   0x40000000, // FILE_FLAG_OVERLAPPED
                   IntPtr.Zero);
 
-            //could not create handle - server probably not running
+            // could not create handle - server probably not running
             if (handle.IsInvalid)
+            {
+                handle = null;
                 return;
+            }
 
             Connected = true;
 
-            //start listening for messages
-            readThread = new Thread(Read)
-                             {
-                                 IsBackground = true
-                             };
+            // start listening for messages
+            readThread = new Thread(Read) { IsBackground = true };
             readThread.Start();
         }
 
@@ -137,6 +137,7 @@ namespace wyDay.Controls
             //clean up resource
             if (stream != null)
                 stream.Dispose();
+
             handle.Dispose();
 
             stream = null;
