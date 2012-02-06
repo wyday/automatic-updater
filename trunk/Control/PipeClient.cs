@@ -134,10 +134,12 @@ namespace wyDay.Controls
             Connected = false;
             PipeName = null;
 
-            //clean up resource
+            // clean up resources
             if (stream != null)
                 stream.Dispose();
 
+            // If Connected == true then handle is non-null.
+            // Thus, just dispose it.
             handle.Dispose();
 
             stream = null;
