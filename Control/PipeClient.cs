@@ -6,9 +6,7 @@ using Microsoft.Win32.SafeHandles;
 
 namespace wyDay.Controls
 {
-    /// <summary>
-    /// Allow pipe communication between a server and a client
-    /// </summary>
+    /// <summary>Allow pipe communication between a server and a client.</summary>
     public class PipeClient : IDisposable
     {
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode, CallingConvention = CallingConvention.StdCall, SetLastError = true)]
@@ -215,9 +213,7 @@ namespace wyDay.Controls
             }
         }
 
-        /// <summary>
-        /// Sends a message to the server.
-        /// </summary>
+        /// <summary>Sends a message to the server.</summary>
         /// <param name="message">The message to send.</param>
         /// <returns>True if the message is sent successfully - false otherwise.</returns>
         public bool SendMessage(byte[] message)
