@@ -10,6 +10,7 @@ namespace wyDay.Controls
 	{
 		public RichTextBoxEx()
 		{
+            DetectUrls = false;
             BorderStyle = BorderStyle.None;
 		}
 
