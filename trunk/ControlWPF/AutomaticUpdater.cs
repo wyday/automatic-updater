@@ -1084,20 +1084,24 @@ namespace wyDay.Controls
 
         void ViewChanges_Click(object sender, EventArgs e)
         {
-            frmChanges changeForm = new frmChanges(auBackend.Version, auBackend.RawChanges, auBackend.AreChangesRTF, ShowButtonUpdateNow, translation);
-            changeForm.ShowDialog();
+            using (frmChanges changeForm = new frmChanges(auBackend.Version, auBackend.RawChanges, auBackend.AreChangesRTF, ShowButtonUpdateNow, translation))
+            {
+                changeForm.ShowDialog();
 
-            if (changeForm.UpdateNow)
-                InstallNow();
+                if (changeForm.UpdateNow)
+                    InstallNow();
+            }
         }
 
         void ViewError_Click(object sender, EventArgs e)
         {
-            frmError errorForm = new frmError(failArgs, translation);
-            errorForm.ShowDialog();
+            using (frmError errorForm = new frmError(failArgs, translation))
+            {
+                errorForm.ShowDialog();
 
-            if (errorForm.TryAgainLater)
-                TryAgainLater_Click(this, EventArgs.Empty);
+                if (errorForm.TryAgainLater)
+                    TryAgainLater_Click(this, EventArgs.Empty);
+            }
         }
 
         void TryAgainLater_Click(object sender, EventArgs e)

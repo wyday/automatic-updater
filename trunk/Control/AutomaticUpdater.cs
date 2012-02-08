@@ -514,9 +514,7 @@ namespace wyDay.Controls
             auBackend.CloseAppNow += auBackend_CloseAppNow;
         }
 
-        /// <summary>
-        /// Represents an AutomaticUpdater control.
-        /// </summary>
+        /// <summary>Represents an AutomaticUpdater control.</summary>
         /// <param name="parentControl">The owner form of the AutomaticUpdater.</param>
         public AutomaticUpdater(Form parentControl)
             : this()
@@ -1163,20 +1161,24 @@ namespace wyDay.Controls
 
         void ViewChanges_Click(object sender, EventArgs e)
         {
-            frmChanges changeForm = new frmChanges(auBackend.Version, auBackend.RawChanges, auBackend.AreChangesRTF, ShowButtonUpdateNow, translation);
-            changeForm.ShowDialog(ownerForm);
+            using (frmChanges changeForm = new frmChanges(auBackend.Version, auBackend.RawChanges, auBackend.AreChangesRTF, ShowButtonUpdateNow, translation))
+            {
+                changeForm.ShowDialog(ownerForm);
 
-            if (changeForm.UpdateNow)
-                InstallNow();
+                if (changeForm.UpdateNow)
+                    InstallNow();
+            }
         }
 
         void ViewError_Click(object sender, EventArgs e)
         {
-            frmError errorForm = new frmError(failArgs, translation);
-            errorForm.ShowDialog(ownerForm);
+            using (frmError errorForm = new frmError(failArgs, translation))
+            {
+                errorForm.ShowDialog(ownerForm);
 
-            if (errorForm.TryAgainLater)
-                TryAgainLater_Click(this, EventArgs.Empty);
+                if (errorForm.TryAgainLater)
+                    TryAgainLater_Click(this, EventArgs.Empty);
+            }
         }
 
         void TryAgainLater_Click(object sender, EventArgs e)
