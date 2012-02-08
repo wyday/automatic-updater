@@ -164,7 +164,7 @@ namespace wyDay.Controls
                     throw new Exception("You must set the GUID at Design time (or before you call the Initialize() function).");
 
                 // disallow bad filename characters
-                if (value.IndexOfAny(Path.GetInvalidFileNameChars()) != -1)
+                if (value != null && value.IndexOfAny(Path.GetInvalidFileNameChars()) != -1)
                     throw new Exception("The GUID cannot contain invalid filename characters.");
 
                 m_GUID = value;

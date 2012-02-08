@@ -1,4 +1,6 @@
-﻿namespace wyDay.Controls
+﻿using System;
+
+namespace wyDay.Controls
 {
     /// <summary>
     /// Reports the progress in the current update step.
@@ -31,7 +33,7 @@
     /// <summary>
     /// Event data for a successful update step.
     /// </summary>
-    public class SuccessArgs
+    public class SuccessArgs : EventArgs
     {
         /// <summary>
         /// The new version of your application.
@@ -42,7 +44,7 @@
     /// <summary>
     /// Event data for a failed step.
     /// </summary>
-    public class FailArgs
+    public class FailArgs : EventArgs
     {
         /// <summary>
         /// The brief description of the error.
@@ -63,7 +65,7 @@
     /// <summary>
     /// Event data for before an update step is processed.
     /// </summary>
-    public class BeforeArgs
+    public class BeforeArgs : EventArgs
     {
         /// <summary>
         /// Prevent the current step from happening.
