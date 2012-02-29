@@ -530,8 +530,12 @@ namespace wyDay.Controls
             // otherwise it is a premature exit (and needs to be treated as an error)
             if (UpdateStepOn == UpdateStepOn.Checking
                 || UpdateStepOn == UpdateStepOn.DownloadingUpdate
-                || UpdateStepOn == UpdateStepOn.ExtractingUpdate)
+                || UpdateStepOn == UpdateStepOn.ExtractingUpdate
+                || e.UpdateStep == UpdateStep.RestartInfo)
             {
+                if (e.UpdateStep == UpdateStep.RestartInfo && ClosingAborted != null)
+                    ClosingAborted(this, EventArgs.Empty);
+
                 // wyUpdate premature exit error
                 UpdateStepFailed(UpdateStepOn, new FailArgs { wyUpdatePrematureExit = true, ErrorTitle = e.ExtraData[0], ErrorMessage = e.ExtraData[1] });
             }
@@ -726,6 +730,11 @@ namespace wyDay.Controls
                     if (ExtractingFailed != null)
                         ExtractingFailed(this, args);
 
+                    break;
+                default:
+
+                    if (UpdateFailed != null)
+                        UpdateFailed(this, args);
                     break;
             }
         }
