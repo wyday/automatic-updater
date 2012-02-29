@@ -273,9 +273,7 @@ namespace wyDay.Controls
                 throw new Exception("Message failed to send message to pipe server");
         }
 
-        /// <summary>
-        /// Tries to send a message MaxSendRetries waiting MilliSecsBetweenRetry.
-        /// </summary>
+        /// <summary>Tries to send a message MaxSendRetries waiting MilliSecsBetweenRetry.</summary>
         /// <param name="message">Message to send.</param>
         /// <returns>True if success.</returns>
         bool RetrySend(byte[] message)
