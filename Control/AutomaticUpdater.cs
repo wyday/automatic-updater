@@ -10,14 +10,10 @@ namespace wyDay.Controls
 {
 
 #if NET_2_0
-    /// <summary>
-    /// Represents the AutomaticUpdater control.
-    /// </summary>
+    /// <summary>Represents the AutomaticUpdater control.</summary>
     [Designer(typeof(AutomaticUpdaterDesigner))]
 #else
-    /// <summary>
-    /// Represents the AutomaticUpdater control.
-    /// </summary>
+    /// <summary>Represents the AutomaticUpdater control.</summary>
     [Designer("wyDay.Controls.AutomaticUpdaterDesigner, AutomaticUpdater.Design")]
 #endif
     [ToolboxBitmapAttribute(typeof(AutomaticUpdater), "update-notify.png")]
@@ -65,93 +61,72 @@ namespace wyDay.Controls
 
         #region Events
 
-        /// <summary>
-        /// Event is raised before the update checking begins.
-        /// </summary>
+        /// <summary>Event is raised before the update checking begins.</summary>
         [Description("Event is raised before the update checking begins."),
         Category("Updater")]
         public event BeforeHandler BeforeChecking;
 
-        /// <summary>
-        /// Event is raised before the downloading of the update begins.
-        /// </summary>
+        /// <summary>Event is raised before the downloading of the update begins.</summary>
         [Description("Event is raised before the downloading of the update begins."),
         Category("Updater")]
         public event BeforeHandler BeforeDownloading;
-        
-        /// <summary>
-        /// Event is raised when checking or updating is cancelled.
-        /// </summary>
+
+        /// <summary>Event is raised before the installation of the update begins.</summary>
+        [Description("Event is raised before the installation of the update begins."),
+        Category("Updater")]
+        public event BeforeHandler BeforeInstalling;
+
+        /// <summary>Event is raised when checking or updating is cancelled.</summary>
         [Description("Event is raised when checking or updating is cancelled."),
         Category("Updater")]
         public event EventHandler Cancelled;
 
-        /// <summary>
-        /// Event is raised when the checking for updates fails.
-        /// </summary>
+        /// <summary>Event is raised when the checking for updates fails.</summary>
         [Description("Event is raised when the checking for updates fails."),
         Category("Updater")]
         public event FailHandler CheckingFailed;
 
-        /// <summary>
-        /// Event is raised after you or your user invoked InstallNow(). You should close your app as quickly as possible (because wyUpdate will be waiting).
-        /// </summary>
+        /// <summary>Event is raised after you or your user invoked InstallNow(). You should close your app as quickly as possible (because wyUpdate will be waiting).</summary>
         [Description("Event is raised after you or your user invoked InstallNow(). You should close your app as quickly as possible (because wyUpdate will be waiting)."),
         Category("Updater")]
         public event EventHandler CloseAppNow;
 
-        /// <summary>
-        /// Event is raised when an update can't be installed and the closing is aborted.
-        /// </summary>
+        /// <summary>Event is raised when an update can't be installed and the closing is aborted.</summary>
         [Description("Event is raised when an update can't be installed and the closing is aborted."),
         Category("Updater")]
         public event EventHandler ClosingAborted;
 
-        /// <summary>
-        /// Event is raised when the update fails to download or extract.
-        /// </summary>
+        /// <summary>Event is raised when the update fails to download or extract.</summary>
         [Description("Event is raised when the update fails to download or extract."),
         Category("Updater")]
         public event FailHandler DownloadingOrExtractingFailed;
 
-        /// <summary>
-        /// Event is raised when the current update step progress changes.
-        /// </summary>
+        /// <summary>Event is raised when the current update step progress changes.</summary>
         [Description("Event is raised when the current update step progress changes."),
         Category("Updater")]
         public event UpdateProgressChanged ProgressChanged;
 
-        /// <summary>
-        /// Event is raised when the update is ready to be installed.
-        /// </summary>
+        /// <summary>Event is raised when the update is ready to be installed.</summary>
         [Description("Event is raised when the update is ready to be installed."),
         Category("Updater")]
         public event EventHandler ReadyToBeInstalled;
 
-        /// <summary>
-        /// Event is raised when a new update is found.
-        /// </summary>
+        /// <summary>Event is raised when a new update is found.</summary>
         [Description("Event is raised when a new update is found."),
         Category("Updater")]
         public event EventHandler UpdateAvailable;
 
-        /// <summary>
-        /// Event is raised when an update fails to install.
-        /// </summary>
+        /// <summary>Event is raised when an update fails to install.</summary>
         [Description("Event is raised when an update fails to install."),
         Category("Updater")]
         public event FailHandler UpdateFailed;
 
-        /// <summary>
-        /// Event is raised when an update installs successfully.
-        /// </summary>
+        /// <summary>Event is raised when an update installs successfully.</summary>
         [Description("Event is raised when an update installs successfully."),
         Category("Updater")]
         public event SuccessHandler UpdateSuccessful;
 
-        /// <summary>
-        /// Event is raised when the latest version is already installed.
-        /// </summary>
+        /// <summary>Event is raised when the latest version is already installed.</summary>
         [Description("Event is raised when the latest version is already installed."),
         Category("Updater")]
         public event SuccessHandler UpToDate;
@@ -495,6 +470,7 @@ namespace wyDay.Controls
             auBackend.BeforeChecking += auBackend_BeforeChecking;
             auBackend.BeforeDownloading += auBackend_BeforeDownloading;
             auBackend.BeforeExtracting += auBackend_BeforeExtracting;
+            auBackend.BeforeInstalling += auBackend_BeforeInstalling;
             auBackend.Cancelled += auBackend_Cancelled;
             auBackend.ReadyToBeInstalled += auBackend_ReadyToBeInstalled;
             auBackend.UpdateAvailable += auBackend_UpdateAvailable;
@@ -748,6 +724,21 @@ namespace wyDay.Controls
             CreateMenu(MenuType.CancelExtracting);
         }
 
+        void auBackend_BeforeInstalling(object sender, BeforeArgs e)
+        {
+            // call this function from ownerForm's thread context
+            if (sender != null)
+            {
+                if (ownerForm.IsHandleCreated)
+                    ownerForm.Invoke(new BeforeHandler(auBackend_BeforeInstalling), new object[] { null, e });
+
+                return;
+            }
+
+            if (BeforeInstalling != null)
+                BeforeInstalling(this, e);
+        }
+
         void auBackend_CheckingFailed(object sender, FailArgs e)
         {
             // call this function from ownerForm's thread context
@@ -845,7 +836,8 @@ namespace wyDay.Controls
             // call this function from ownerForm's thread context
             if (sender != null)
             {
-                ownerForm.Invoke(new EventHandler(auBackend_ClosingAborted), new object[] { null, e });
+                if (ownerForm.IsHandleCreated)
+                    ownerForm.Invoke(new EventHandler(auBackend_ClosingAborted), new object[] { null, e });
                 return;
             }
 
@@ -1133,9 +1125,7 @@ namespace wyDay.Controls
             InstallNow();
         }
 
-        /// <summary>
-        /// Proceed with the download and installation of pending updates.
-        /// </summary>
+        /// <summary>Proceed with the download and installation of pending updates.</summary>
         public void InstallNow()
         {
             auBackend.InstallNow();

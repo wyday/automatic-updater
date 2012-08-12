@@ -26,84 +26,55 @@ namespace wyDay.Controls
 
         #region Events
 
-        /// <summary>
-        /// Event is raised before the update checking begins.
-        /// </summary>
+        /// <summary>Event is raised before the update checking begins.</summary>
         public event BeforeHandler BeforeChecking;
 
-        /// <summary>
-        /// Event is raised before the downloading of the update begins.
-        /// </summary>
+        /// <summary>Event is raised before the downloading of the update begins.</summary>
         public event BeforeHandler BeforeDownloading;
 
-        /// <summary>
-        /// Event is raised before the extracting of the update begins.
-        /// </summary>
+        /// <summary>Event is raised before the installation of the update begins.</summary>
+        public event BeforeHandler BeforeInstalling;
+
+        /// <summary>Event is raised before the extracting of the update begins.</summary>
         public event BeforeHandler BeforeExtracting;
 
-        /// <summary>
-        /// Event is raised when checking or updating is cancelled.
-        /// </summary>
+        /// <summary>Event is raised when checking or updating is cancelled.</summary>
         public event EventHandler Cancelled;
 
-        /// <summary>
-        /// Event is raised when the checking for updates fails.
-        /// </summary>
+        /// <summary>Event is raised when the checking for updates fails.</summary>
         public event FailHandler CheckingFailed;
 
-        /// <summary>
-        /// Event is raised after you or your user invoked InstallNow(). You should close your app as quickly as possible (because wyUpdate will be waiting).
-        /// </summary>
+        /// <summary>Event is raised after you or your user invoked InstallNow(). You should close your app as quickly as possible (because wyUpdate will be waiting).</summary>
         public event EventHandler CloseAppNow;
 
-        /// <summary>
-        /// Event is raised when an update can't be installed and the closing is aborted.
-        /// </summary>
+        /// <summary>Event is raised when an update can't be installed and the closing is aborted.</summary>
         public event EventHandler ClosingAborted;
 
-        /// <summary>
-        /// Event is raised when the update fails to download.
-        /// </summary>
+        /// <summary>Event is raised when the update fails to download.</summary>
         public event FailHandler DownloadingFailed;
 
-        /// <summary>
-        /// Event is raised when the update fails to extract.
-        /// </summary>
+        /// <summary>Event is raised when the update fails to extract.</summary>
         public event FailHandler ExtractingFailed;
 
-        /// <summary>
-        /// Event is raised when the current update step progress changes.
-        /// </summary>
+        /// <summary>Event is raised when the current update step progress changes.</summary>
         public event UpdateProgressChanged ProgressChanged;
 
-        /// <summary>
-        /// Event is raised when the update is ready to be installed.
-        /// </summary>
+        /// <summary>Event is raised when the update is ready to be installed.</summary>
         public event EventHandler ReadyToBeInstalled;
 
-        /// <summary>
-        /// Event is raised when a new update is found.
-        /// </summary>
+        /// <summary>Event is raised when a new update is found.</summary>
         public event EventHandler UpdateAvailable;
 
-        /// <summary>
-        /// Event is raised when an update fails to install.
-        /// </summary>
+        /// <summary>Event is raised when an update fails to install.</summary>
         public event FailHandler UpdateFailed;
 
-        /// <summary>
-        /// Event is raised when an update installs successfully.
-        /// </summary>
+        /// <summary>Event is raised when an update installs successfully.</summary>
         public event SuccessHandler UpdateSuccessful;
 
-        /// <summary>
-        /// Event is raised when the latest version is already installed.
-        /// </summary>
+        /// <summary>Event is raised when the latest version is already installed.</summary>
         public event SuccessHandler UpToDate;
 
-        /// <summary>
-        /// Event is raised when the update step that is supposed to be processed isn't the step that's processed.
-        /// </summary>
+        /// <summary>Event is raised when the update step that is supposed to be processed isn't the step that's processed.</summary>
         public event EventHandler UpdateStepMismatch;
 
         #endregion Events
@@ -320,6 +291,7 @@ namespace wyDay.Controls
             updateHelper.ProgressChanged += updateHelper_ProgressChanged;
             updateHelper.PipeServerDisconnected += updateHelper_PipeServerDisconnected;
             updateHelper.UpdateStepMismatch += updateHelper_UpdateStepMismatch;
+            updateHelper.ResendRestartInfo += updateHelper_ResendRestartInfo;
         }
 
         internal AutomaticUpdaterBackend(bool bufferResponse) : this()
@@ -447,6 +419,22 @@ namespace wyDay.Controls
 
         void InstallPendingUpdate()
         {
+            BeforeArgs bArgs = new BeforeArgs();
+
+            if (BeforeInstalling != null)
+                BeforeInstalling(this, bArgs);
+
+            // if the update is cancelled postpone the update until later
+            if (bArgs.Cancel)
+            {
+                if (ClosingForInstall && ClosingAborted != null)
+                {
+                    ClosingAborted(this, EventArgs.Empty);
+                    ClosingForInstall = false;
+                }
+                return;
+            }
+
             // send the client the arguments that need to run on success and failure
             if (ServiceName != null)
                 updateHelper.RestartInfo(ServiceName, AutoUpdaterInfo.AutoUpdateID, Arguments, true);
@@ -502,6 +490,8 @@ namespace wyDay.Controls
             {
                 if (ClosingAborted != null)
                     ClosingAborted(this, EventArgs.Empty);
+
+                ClosingForInstall = false;
             }
 
             if (respType == Response.Progress)
@@ -533,8 +523,13 @@ namespace wyDay.Controls
                 || UpdateStepOn == UpdateStepOn.ExtractingUpdate
                 || e.UpdateStep == UpdateStep.RestartInfo)
             {
-                if (e.UpdateStep == UpdateStep.RestartInfo && ClosingAborted != null)
-                    ClosingAborted(this, EventArgs.Empty);
+                if (e.UpdateStep == UpdateStep.RestartInfo)
+                {
+                    if (ClosingAborted != null)
+                        ClosingAborted(this, EventArgs.Empty);
+
+                    ClosingForInstall = false;
+                }
 
                 // wyUpdate premature exit error
                 UpdateStepFailed(UpdateStepOn, new FailArgs { wyUpdatePrematureExit = true, ErrorTitle = e.ExtraData[0], ErrorMessage = e.ExtraData[1] });
@@ -623,6 +618,15 @@ namespace wyDay.Controls
 
                     break;
             }
+        }
+
+        void updateHelper_ResendRestartInfo(object sender, EventArgs e)
+        {
+            // send the client the arguments that need to run on success and failure
+            if (ServiceName != null)
+                updateHelper.RestartInfo(ServiceName, AutoUpdaterInfo.AutoUpdateID, Arguments, true);
+            else
+                updateHelper.RestartInfo(Application.ExecutablePath, AutoUpdaterInfo.AutoUpdateID, Arguments, false);
         }
 
         void StartNextStep(UpdateStep updateStepOn)

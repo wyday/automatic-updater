@@ -55,6 +55,7 @@ namespace wyDay.Controls
         public event UpdateStepMismatchHandler UpdateStepMismatch;
         public event ResponseHandler ProgressChanged;
         public event ResponseHandler PipeServerDisconnected;
+        public event EventHandler ResendRestartInfo;
 
         public UpdateStep UpdateStep = UpdateStep.CheckForUpdate;
 
@@ -490,7 +491,10 @@ namespace wyDay.Controls
 
                 // begin where we left off
                 // if update step == RestartInfo, we need to send the restart info as well
-                SendAsync(new UpdateHelperData(UpdateStep));
+                if (ResendRestartInfo != null && UpdateStep == UpdateStep.RestartInfo)
+                    ResendRestartInfo(this, EventArgs.Empty);
+                else
+                    SendAsync(new UpdateHelperData(UpdateStep));
 
                 return;
             }
