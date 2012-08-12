@@ -2,30 +2,22 @@
 
 namespace wyDay.Controls
 {
-    /// <summary>
-    /// Reports the progress in the current update step.
-    /// </summary>
+    /// <summary>Reports the progress in the current update step.</summary>
     /// <param name="sender">Sender</param>
     /// <param name="progress">Progress</param>
     public delegate void UpdateProgressChanged(object sender, int progress);
 
-    /// <summary>
-    /// Represents the method that will handle an event that is cancelable.
-    /// </summary>
+    /// <summary>Represents the method that will handle an event that is cancelable.</summary>
     /// <param name="sender">The source of the event.</param>
     /// <param name="e">A BeforeArgs that allows you to canel the step.</param>
     public delegate void BeforeHandler(object sender, BeforeArgs e);
 
-    /// <summary>
-    /// Represents the method that will handle a failure event.
-    /// </summary>
+    /// <summary>Represents the method that will handle a failure event.</summary>
     /// <param name="sender">The source of the event.</param>
     /// <param name="e">A FailArgs that contains the failure info.</param>
     public delegate void FailHandler(object sender, FailArgs e);
 
-    /// <summary>
-    /// Represents the method that will handle a success event.
-    /// </summary>
+    /// <summary>Represents the method that will handle a success event.</summary>
     /// <param name="sender">The source of the event.</param>
     /// <param name="e">A SuccessArgs that contains the success info.</param>
     public delegate void SuccessHandler(object sender, SuccessArgs e);
