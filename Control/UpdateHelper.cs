@@ -457,7 +457,16 @@ namespace wyDay.Controls
         {
             if (data.Action == UpdateAction.GetwyUpdateProcessID)
             {
-                ClientProcess = Process.GetProcessById(data.ProcessID);
+                try
+                {
+                    ClientProcess = Process.GetProcessById(data.ProcessID);
+                }
+                catch (Exception)
+                {
+                    // inform the AutomaticUpdater that wyUpdate is no longer running
+                    if (PipeServerDisconnected != null)
+                        PipeServerDisconnected(this, new UpdateHelperData(Response.Failed, UpdateStep, AUTranslation.C_PrematureExitTitle, "Failed to connect to the new version of wyUpdate.exe"));
+                }
                 return;
             }
 
