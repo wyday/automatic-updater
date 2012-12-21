@@ -504,7 +504,8 @@ namespace wyDay.Controls
             // call this function from ownerForm's thread context
             if (sender != null)
             {
-                ownerForm.Invoke(new EventHandler(auBackend_CloseAppNow), new object[] { null, e });
+                if (!ownerForm.IsDisposed)
+                    ownerForm.Invoke(new EventHandler(auBackend_CloseAppNow), new object[] { null, e });
                 return;
             }
 
@@ -520,7 +521,8 @@ namespace wyDay.Controls
             // call this function from ownerForm's thread context
             if (sender != null)
             {
-                ownerForm.Invoke(new SuccessHandler(auBackend_UpToDate), new object[] { null, e });
+                if (!ownerForm.IsDisposed)
+                    ownerForm.Invoke(new SuccessHandler(auBackend_UpToDate), new object[] { null, e });
                 return;
             }
 
@@ -540,7 +542,8 @@ namespace wyDay.Controls
             // call this function from ownerForm's thread context
             if (sender != null)
             {
-                ownerForm.Invoke(new SuccessHandler(auBackend_UpdateSuccessful), new object[] { null, e });
+                if (!ownerForm.IsDisposed)
+                    ownerForm.Invoke(new SuccessHandler(auBackend_UpdateSuccessful), new object[] { null, e });
                 return;
             }
 
@@ -559,7 +562,8 @@ namespace wyDay.Controls
             // call this function from ownerForm's thread context
             if (sender != null)
             {
-                ownerForm.Invoke(new FailHandler(auBackend_UpdateFailed), new object[] { null, e });
+                if (!ownerForm.IsDisposed)
+                    ownerForm.Invoke(new FailHandler(auBackend_UpdateFailed), new object[] { null, e });
                 return;
             }
 
@@ -582,7 +586,8 @@ namespace wyDay.Controls
             // call this function from ownerForm's thread context
             if (sender != null)
             {
-                ownerForm.Invoke(new EventHandler(auBackend_UpdateAvailable), new object[] { null, e });
+                if (!ownerForm.IsDisposed)
+                    ownerForm.Invoke(new EventHandler(auBackend_UpdateAvailable), new object[] { null, e });
                 return;
             }
 
@@ -613,7 +618,8 @@ namespace wyDay.Controls
             // call this function from ownerForm's thread context
             if (sender != null)
             {
-                ownerForm.Invoke(new EventHandler(auBackend_ReadyToBeInstalled), new object[] { null, e });
+                if (!ownerForm.IsDisposed)
+                    ownerForm.Invoke(new EventHandler(auBackend_ReadyToBeInstalled), new object[] { null, e });
                 return;
             }
 
@@ -646,7 +652,8 @@ namespace wyDay.Controls
             // call this function from ownerForm's thread context
             if (sender != null)
             {
-                ownerForm.Invoke(new EventHandler(auBackend_Cancelled), new object[] { null, e });
+                if (!ownerForm.IsDisposed)
+                    ownerForm.Invoke(new EventHandler(auBackend_Cancelled), new object[] { null, e });
                 return;
             }
 
@@ -690,7 +697,8 @@ namespace wyDay.Controls
             // call this function from ownerForm's thread context
             if (sender != null)
             {
-                ownerForm.Invoke(new BeforeHandler(auBackend_BeforeDownloading), new object[] { null, e });
+                if (!ownerForm.IsDisposed)
+                    ownerForm.Invoke(new BeforeHandler(auBackend_BeforeDownloading), new object[] { null, e });
                 return;
             }
 
@@ -715,7 +723,8 @@ namespace wyDay.Controls
             // call this function from ownerForm's thread context
             if (sender != null)
             {
-                ownerForm.Invoke(new BeforeHandler(auBackend_BeforeExtracting), new object[] { null, e });
+                if (!ownerForm.IsDisposed)
+                    ownerForm.Invoke(new BeforeHandler(auBackend_BeforeExtracting), new object[] { null, e });
                 return;
             }
 
@@ -729,7 +738,7 @@ namespace wyDay.Controls
             // call this function from ownerForm's thread context
             if (sender != null)
             {
-                if (ownerForm.IsHandleCreated)
+                if (ownerForm.IsHandleCreated && !ownerForm.IsDisposed)
                     ownerForm.Invoke(new BeforeHandler(auBackend_BeforeInstalling), new object[] { null, e });
 
                 return;
@@ -744,7 +753,8 @@ namespace wyDay.Controls
             // call this function from ownerForm's thread context
             if (sender != null)
             {
-                ownerForm.Invoke(new FailHandler(auBackend_CheckingFailed), new object[] { null, e });
+                if (!ownerForm.IsDisposed)
+                    ownerForm.Invoke(new FailHandler(auBackend_CheckingFailed), new object[] { null, e });
                 return;
             }
 
@@ -761,7 +771,8 @@ namespace wyDay.Controls
             // call this function from ownerForm's thread context
             if (sender != null)
             {
-                ownerForm.Invoke(new FailHandler(auBackend_DownloadingFailed), new object[] { null, e });
+                if (!ownerForm.IsDisposed)
+                    ownerForm.Invoke(new FailHandler(auBackend_DownloadingFailed), new object[] { null, e });
                 return;
             }
 
@@ -778,7 +789,8 @@ namespace wyDay.Controls
             // call this function from ownerForm's thread context
             if (sender != null)
             {
-                ownerForm.Invoke(new FailHandler(auBackend_ExtractingFailed), new object[] { null, e });
+                if (!ownerForm.IsDisposed)
+                    ownerForm.Invoke(new FailHandler(auBackend_ExtractingFailed), new object[] { null, e });
                 return;
             }
 
@@ -818,7 +830,8 @@ namespace wyDay.Controls
             // call this function from ownerForm's thread context
             if (sender != null)
             {
-                ownerForm.Invoke(new UpdateProgressChanged(auBackend_ProgressChanged), new object[] { null, progress });
+                if (!ownerForm.IsDisposed)
+                    ownerForm.Invoke(new UpdateProgressChanged(auBackend_ProgressChanged), new object[] { null, progress });
                 return;
             }
 
@@ -836,7 +849,7 @@ namespace wyDay.Controls
             // call this function from ownerForm's thread context
             if (sender != null)
             {
-                if (ownerForm.IsHandleCreated)
+                if (ownerForm.IsHandleCreated && !ownerForm.IsDisposed)
                     ownerForm.Invoke(new EventHandler(auBackend_ClosingAborted), new object[] { null, e });
                 return;
             }
@@ -857,7 +870,8 @@ namespace wyDay.Controls
             // call this function from ownerForm's thread context
             if (sender != null)
             {
-                ownerForm.Invoke(new EventHandler(auBackend_UpdateStepMismatch), new object[] { null, e });
+                if (!ownerForm.IsDisposed)
+                    ownerForm.Invoke(new EventHandler(auBackend_UpdateStepMismatch), new object[] { null, e });
                 return;
             }
 
