@@ -5,9 +5,7 @@ using wyUpdate.Common;
 
 namespace wyDay.Controls
 {
-    /// <summary>
-    /// Backend for the AutomaticUpdater control.
-    /// </summary>
+    /// <summary>Backend for the AutomaticUpdater control.</summary>
     public class AutomaticUpdaterBackend : IDisposable
     {
         AutoUpdaterInfo AutoUpdaterInfo;
@@ -81,14 +79,10 @@ namespace wyDay.Controls
 
         #region Properties
 
-        /// <summary>
-        /// Gets or sets the arguments to pass to your app when it's being restarted after an update.
-        /// </summary>
+        /// <summary>Gets or sets the arguments to pass to your app when it's being restarted after an update.</summary>
         public string Arguments { get; set; }
 
-        /// <summary>
-        /// Gets the changes for the new update.
-        /// </summary>
+        /// <summary>Gets the changes for the new update.</summary>
         public string Changes
         {
             get
@@ -104,26 +98,18 @@ namespace wyDay.Controls
             }
         }
 
-        /// <summary>
-        /// Gets the changes for the new update. It may be in RTF or TXT format. Use AreChangesRTF.
-        /// </summary>
+        /// <summary>Gets the changes for the new update. It may be in RTF or TXT format. Use AreChangesRTF.</summary>
         public string RawChanges { get { return changes; } }
 
-        /// <summary>
-        /// Is the RawChanges RTF or text.
-        /// </summary>
+        /// <summary>Is the RawChanges RTF or text.</summary>
         public bool AreChangesRTF { get { return changesAreRTF; } }
 
-        /// <summary>
-        /// Gets if this AutomaticUpdater has hidden this form and preparing to install an update.
-        /// </summary>
+        /// <summary>Gets if this AutomaticUpdater has hidden this form and preparing to install an update.</summary>
         public bool ClosingForInstall { get; private set; }
 
         string m_GUID;
 
-        /// <summary>
-        /// Gets the GUID (Globally Unique ID) of the automatic updater. It is recommended you set this value (especially if there is more than one exe for your product).
-        /// </summary>
+        /// <summary>Gets the GUID (Globally Unique ID) of the automatic updater. It is recommended you set this value (especially if there is more than one exe for your product).</summary>
         /// <exception cref="System.Exception">Thrown when trying to set the GUID at runtime.</exception>
         public string GUID
         {
@@ -142,18 +128,14 @@ namespace wyDay.Controls
             }
         }
 
-        /// <summary>
-        /// Gets the date the updates were last checked for.
-        /// </summary>
+        /// <summary>Gets the date the updates were last checked for.</summary>
         public DateTime LastCheckDate
         {
             get { return AutoUpdaterInfo.LastCheckedForUpdate; }
         }
 
 
-        /// <summary>
-        /// Gets the update step the AutomaticUpdater is currently on.
-        /// </summary>
+        /// <summary>Gets the update step the AutomaticUpdater is currently on.</summary>
         public UpdateStepOn UpdateStepOn
         {
             get
@@ -178,9 +160,7 @@ namespace wyDay.Controls
             }
         }
 
-        /// <summary>
-        /// Gets or sets how much this AutomaticUpdater control should do without user interaction.
-        /// </summary>
+        /// <summary>Gets or sets how much this AutomaticUpdater control should do without user interaction.</summary>
         public UpdateType UpdateType
         {
             get { return m_UpdateType; }
@@ -191,9 +171,7 @@ namespace wyDay.Controls
             }
         }
 
-        /// <summary>
-        /// Gets the version of the new update.
-        /// </summary>
+        /// <summary>Gets the version of the new update.</summary>
         public string Version
         {
             get
@@ -202,51 +180,39 @@ namespace wyDay.Controls
             }
         }
 
-        /// <summary>
-        /// Gets or sets the arguments to pass to wyUpdate when it is started to check for updates.
-        /// </summary>
+        /// <summary>Gets or sets the arguments to pass to wyUpdate when it is started to check for updates.</summary>
         public string wyUpdateCommandline
         {
             get { return updateHelper.ExtraArguments; }
             set { updateHelper.ExtraArguments = value; }
         }
 
-        /// <summary>
-        /// Gets or sets the relative path to the wyUpdate (e.g. wyUpdate.exe  or  SubDir\\wyUpdate.exe)
-        /// </summary>
+        /// <summary>Gets or sets the relative path to the wyUpdate (e.g. wyUpdate.exe  or  SubDir\\wyUpdate.exe)</summary>
         public string wyUpdateLocation
         {
             get { return updateHelper.wyUpdateLocation; }
             set { updateHelper.wyUpdateLocation = value; }
         }
 
-        /// <summary>
-        /// Gets or sets the service to start after the update.
-        /// </summary>
+        /// <summary>Gets or sets the service to start after the update.</summary>
         public string ServiceName { get; set; }
 
         #endregion
 
         #region Dispose
 
-        /// <summary>
-        /// Indicates whether this instance is disposed.
-        /// </summary>
+        /// <summary>Indicates whether this instance is disposed.</summary>
         private bool isDisposed;
 
-        /// <summary>
-        /// Finalizes an instance of the <see cref="AutomaticUpdaterBackend"/> class.
+        /// <summary>Finalizes an instance of the <see cref="AutomaticUpdaterBackend"/> class.
         /// Releases unmanaged resources and performs other cleanup operations before the
-        /// <see cref="AutomaticUpdaterBackend"/> is reclaimed by garbage collection.
-        /// </summary>
+        /// <see cref="AutomaticUpdaterBackend"/> is reclaimed by garbage collection.</summary>
         ~AutomaticUpdaterBackend()
         {
             Dispose(false);
         }
 
-        /// <summary>
-        /// Releases unmanaged and - optionally - managed resources.
-        /// </summary>
+        /// <summary>Releases unmanaged and - optionally - managed resources.</summary>
         /// <param name="disposing">Result: <c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
         protected virtual void Dispose(bool disposing)
         {
@@ -272,9 +238,7 @@ namespace wyDay.Controls
             }
         }
 
-        /// <summary>
-        /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
-        /// </summary>
+        /// <summary>Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.</summary>
         public void Dispose()
         {
             Dispose(true);
@@ -283,9 +247,7 @@ namespace wyDay.Controls
 
         #endregion
 
-        /// <summary>
-        /// Represents an AutomaticUpdater control.
-        /// </summary>
+        /// <summary>Represents an AutomaticUpdater control.</summary>
         public AutomaticUpdaterBackend()
         {
             updateHelper.ProgressChanged += updateHelper_ProgressChanged;
@@ -304,9 +266,7 @@ namespace wyDay.Controls
             updateHelper.FlushResponses();
         }
 
-        /// <summary>
-        /// Proceed with the download and installation of pending updates.
-        /// </summary>
+        /// <summary>Proceed with the download and installation of pending updates.</summary>
         public void InstallNow()
         {
             if (AutoUpdaterInfo == null)
@@ -345,9 +305,7 @@ namespace wyDay.Controls
             }
         }
 
-        /// <summary>
-        /// Cancel the checking, downloading, or extracting currently in progress.
-        /// </summary>
+        /// <summary>Cancel the checking, downloading, or extracting currently in progress.</summary>
         public void Cancel()
         {
             if (AutoUpdaterInfo == null)
@@ -369,9 +327,7 @@ namespace wyDay.Controls
                 UpdateStepOn = UpdateStepOn.UpdateAvailable;
         }
 
-        /// <summary>
-        /// Check for updates forcefully -- returns true if the updating has begun. Use the "CheckingFailed", "UpdateAvailable", or "UpToDate" events for the result.
-        /// </summary>
+        /// <summary>Check for updates forcefully -- returns true if the updating has begun. Use the "CheckingFailed", "UpdateAvailable", or "UpToDate" events for the result.</summary>
         /// <param name="recheck">Recheck with the servers regardless of cached updates, etc.</param>
         /// <returns>Returns true if checking has begun, false otherwise.</returns>
         public bool ForceCheckForUpdate(bool recheck)
@@ -408,9 +364,7 @@ namespace wyDay.Controls
             return false;
         }
 
-        /// <summary>
-        /// Check for updates forcefully -- returns true if the updating has begun. Use the "CheckingFailed", "UpdateAvailable", or "UpToDate" events for the result.
-        /// </summary>
+        /// <summary>Check for updates forcefully -- returns true if the updating has begun. Use the "CheckingFailed", "UpdateAvailable", or "UpToDate" events for the result.</summary>
         /// <returns>Returns true if checking has begun, false otherwise.</returns>
         public bool ForceCheckForUpdate()
         {
@@ -759,9 +713,7 @@ namespace wyDay.Controls
         }
 
 
-        /// <summary>
-        /// The intialize function must be called before you can use any other functions.
-        /// </summary>
+        /// <summary>The intialize function must be called before you can use any other functions.</summary>
         public void Initialize()
         {
             // read settings file for last check time
@@ -780,9 +732,7 @@ namespace wyDay.Controls
             }
         }
 
-        /// <summary>
-        /// The function that must be called when your app has loaded.
-        /// </summary>
+        /// <summary>The function that must be called when your app has loaded.</summary>
         public void AppLoaded()
         {
             if (AutoUpdaterInfo == null)
@@ -855,14 +805,10 @@ namespace wyDay.Controls
         }
     }
 
-    /// <summary>
-    /// The fail to Initialize exception.
-    /// </summary>
+    /// <summary>The fail to Initialize exception.</summary>
     public class FailedToInitializeException : Exception
     {
-        /// <summary>
-        /// The fail to Initialize exception.
-        /// </summary>
+        /// <summary>The fail to Initialize exception.</summary>
         public FailedToInitializeException()
             : base("You must call the Initialize() function before you can use any other functions.")
         {
