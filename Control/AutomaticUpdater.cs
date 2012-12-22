@@ -928,11 +928,16 @@ namespace wyDay.Controls
             {
                 // Runs at design time, ensures designer initializes ContainerControl
                 base.Site = value;
-                if (value == null) return;
+
+                if (value == null)
+                    return;
+
                 IDesignerHost service = value.GetService(typeof(IDesignerHost)) as IDesignerHost;
-                if (service == null) return;
-                IComponent rootComponent = service.RootComponent;
-                ContainerForm = rootComponent as Form;
+                
+                if (service == null)
+                    return;
+
+                ContainerForm = service.RootComponent as Form;
             }
         }
         
