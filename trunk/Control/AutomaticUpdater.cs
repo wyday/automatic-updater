@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.Design;
 using System.Drawing;
@@ -497,19 +498,45 @@ namespace wyDay.Controls
         {
             ownerForm = parentControl;
             ownerForm.Load += ownerForm_Load;
+            ownerForm.HandleCreated += ownerForm_HandleCreated;
+        }
+
+        readonly List<object[]> EventBuffer = new List<object[]>();
+
+        void InvokeMyself(Delegate method, params object[] args)
+        {
+            if (!ownerForm.IsHandleCreated)
+            {
+                EventBuffer.Add(new object[] { method, args });
+            }
+            else
+            {
+                try
+                {
+                    ownerForm.Invoke(method, args);
+                }
+                catch (ObjectDisposedException) { /* The main form is already closed, so there's nothing useful to be done. */ }
+            }
+        }
+
+        void ownerForm_HandleCreated(object sender, EventArgs e)
+        {
+            // call any pending events
+            if (EventBuffer.Count > 0)
+            {
+                foreach (object[] ev in EventBuffer)
+                {
+                    InvokeMyself((Delegate)ev[0], (object[])ev[1]);
+                }
+            }
         }
 
         void auBackend_CloseAppNow(object sender, EventArgs e)
         {
-            // call this function from ownerForm's thread context
             if (sender != null)
             {
-                try
-                {
-                    ownerForm.Invoke(new EventHandler(auBackend_CloseAppNow), new object[] { null, e });
-                }
-                catch (ObjectDisposedException) { /* The main form is already closed, so there's nothing useful to be done. */ }
-
+                // call this function from ownerForm's thread context
+                InvokeMyself(new EventHandler(auBackend_CloseAppNow), new object[] {null, e});
                 return;
             }
 
@@ -522,15 +549,10 @@ namespace wyDay.Controls
 
         void auBackend_UpToDate(object sender, SuccessArgs e)
         {
-            // call this function from ownerForm's thread context
             if (sender != null)
             {
-                try
-                {
-                    ownerForm.Invoke(new SuccessHandler(auBackend_UpToDate), new object[] { null, e });
-                }
-                catch (ObjectDisposedException) { /* The main form is already closed, so there's nothing useful to be done. */ }
- 
+                // call this function from ownerForm's thread context
+                InvokeMyself(new SuccessHandler(auBackend_UpToDate), new object[] {null, e});
                 return;
             }
 
@@ -547,15 +569,10 @@ namespace wyDay.Controls
 
         void auBackend_UpdateSuccessful(object sender, SuccessArgs e)
         {
-            // call this function from ownerForm's thread context
             if (sender != null)
             {
-                try
-                {
-                    ownerForm.Invoke(new SuccessHandler(auBackend_UpdateSuccessful), new object[] { null, e });
-                }
-                catch (ObjectDisposedException) { /* The main form is already closed, so there's nothing useful to be done. */ }
-
+                // call this function from ownerForm's thread context
+                InvokeMyself(new SuccessHandler(auBackend_UpdateSuccessful), new object[] {null, e});
                 return;
             }
 
@@ -571,15 +588,10 @@ namespace wyDay.Controls
 
         void auBackend_UpdateFailed(object sender, FailArgs e)
         {
-            // call this function from ownerForm's thread context
             if (sender != null)
             {
-                try
-                {
-                    ownerForm.Invoke(new FailHandler(auBackend_UpdateFailed), new object[] { null, e });
-                }
-                catch (ObjectDisposedException) { /* The main form is already closed, so there's nothing useful to be done. */ }
-
+                // call this function from ownerForm's thread context
+                InvokeMyself(new FailHandler(auBackend_UpdateFailed), new object[] {null, e});
                 return;
             }
 
@@ -599,15 +611,10 @@ namespace wyDay.Controls
 
         void auBackend_UpdateAvailable(object sender, EventArgs e)
         {
-            // call this function from ownerForm's thread context
             if (sender != null)
             {
-                try
-                {
-                    ownerForm.Invoke(new EventHandler(auBackend_UpdateAvailable), new object[] { null, e });
-                }
-                catch (ObjectDisposedException) { /* The main form is already closed, so there's nothing useful to be done. */ }
-
+                // call this function from ownerForm's thread context
+                InvokeMyself(new EventHandler(auBackend_UpdateAvailable), new object[] {null, e});
                 return;
             }
 
@@ -635,15 +642,10 @@ namespace wyDay.Controls
 
         void auBackend_ReadyToBeInstalled(object sender, EventArgs e)
         {
-            // call this function from ownerForm's thread context
             if (sender != null)
             {
-                try
-                {
-                    ownerForm.Invoke(new EventHandler(auBackend_ReadyToBeInstalled), new object[] { null, e });
-                }
-                catch (ObjectDisposedException) { /* The main form is already closed, so there's nothing useful to be done. */ }
-
+                // call this function from ownerForm's thread context
+                InvokeMyself(new EventHandler(auBackend_ReadyToBeInstalled), new object[] {null, e});
                 return;
             }
 
@@ -673,15 +675,10 @@ namespace wyDay.Controls
 
         void auBackend_Cancelled(object sender, EventArgs e)
         {
-            // call this function from ownerForm's thread context
             if (sender != null)
             {
-                try
-                {
-                    ownerForm.Invoke(new EventHandler(auBackend_Cancelled), new object[] { null, e });
-                }
-                catch (ObjectDisposedException) { /* The main form is already closed, so there's nothing useful to be done. */ }
-
+                // call this function from ownerForm's thread context
+                InvokeMyself(new EventHandler(auBackend_Cancelled), new object[] {null, e});
                 return;
             }
 
@@ -722,15 +719,10 @@ namespace wyDay.Controls
 
         void auBackend_BeforeDownloading(object sender, BeforeArgs e)
         {
-            // call this function from ownerForm's thread context
             if (sender != null)
             {
-                try
-                {
-                    ownerForm.Invoke(new BeforeHandler(auBackend_BeforeDownloading), new object[] { null, e });
-                }
-                catch (ObjectDisposedException) { /* The main form is already closed, so there's nothing useful to be done. */ }
- 
+                // call this function from ownerForm's thread context
+                InvokeMyself(new BeforeHandler(auBackend_BeforeDownloading), new object[] {null, e});
                 return;
             }
 
@@ -752,15 +744,10 @@ namespace wyDay.Controls
 
         void auBackend_BeforeExtracting(object sender, BeforeArgs e)
         {
-            // call this function from ownerForm's thread context
             if (sender != null)
             {
-                try
-                {
-                    ownerForm.Invoke(new BeforeHandler(auBackend_BeforeExtracting), new object[] { null, e });
-                }
-                catch (ObjectDisposedException) { /* The main form is already closed, so there's nothing useful to be done. */ }
-
+                // call this function from ownerForm's thread context
+                InvokeMyself(new BeforeHandler(auBackend_BeforeExtracting), new object[] {null, e});
                 return;
             }
 
@@ -769,21 +756,12 @@ namespace wyDay.Controls
             CreateMenu(MenuType.CancelExtracting);
         }
 
-
-
         void auBackend_BeforeInstalling(object sender, BeforeArgs e)
         {
-            // call this function from ownerForm's thread context
             if (sender != null)
             {
-                try
-                {
-                    //TODO: properly queue events is !ownerForm.IsHandleCreated
-                    if (ownerForm.IsHandleCreated)
-                        ownerForm.Invoke(new BeforeHandler(auBackend_BeforeInstalling), new object[] { null, e });
-                }
-                catch (ObjectDisposedException) { /* The main form is already closed, so there's nothing useful to be done. */ }
-
+                // call this function from ownerForm's thread context
+                InvokeMyself(new BeforeHandler(auBackend_BeforeInstalling), new object[] {null, e});
                 return;
             }
 
@@ -793,15 +771,10 @@ namespace wyDay.Controls
 
         void auBackend_CheckingFailed(object sender, FailArgs e)
         {
-            // call this function from ownerForm's thread context
             if (sender != null)
             {
-                try
-                {
-                    ownerForm.Invoke(new FailHandler(auBackend_CheckingFailed), new object[] { null, e });
-                }
-                catch (ObjectDisposedException) { /* The main form is already closed, so there's nothing useful to be done. */ }
-
+                // call this function from ownerForm's thread context
+                InvokeMyself(new FailHandler(auBackend_CheckingFailed), new object[] {null, e});
                 return;
             }
 
@@ -815,15 +788,10 @@ namespace wyDay.Controls
 
         void auBackend_DownloadingFailed(object sender, FailArgs e)
         {
-            // call this function from ownerForm's thread context
             if (sender != null)
             {
-                try
-                {
-                    ownerForm.Invoke(new FailHandler(auBackend_DownloadingFailed), new object[] { null, e });
-                }
-                catch (ObjectDisposedException) { /* The main form is already closed, so there's nothing useful to be done. */ }
-
+                // call this function from ownerForm's thread context
+                InvokeMyself(new FailHandler(auBackend_DownloadingFailed), new object[] {null, e});
                 return;
             }
 
@@ -837,15 +805,10 @@ namespace wyDay.Controls
 
         void auBackend_ExtractingFailed(object sender, FailArgs e)
         {
-            // call this function from ownerForm's thread context
             if (sender != null)
             {
-                try
-                {
-                    ownerForm.Invoke(new FailHandler(auBackend_ExtractingFailed), new object[] { null, e });
-                }
-                catch (ObjectDisposedException) { /* The main form is already closed, so there's nothing useful to be done. */ }
-
+                // call this function from ownerForm's thread context
+                InvokeMyself(new FailHandler(auBackend_ExtractingFailed), new object[] {null, e});
                 return;
             }
 
@@ -882,15 +845,10 @@ namespace wyDay.Controls
 
         void auBackend_ProgressChanged(object sender, int progress)
         {
-            // call this function from ownerForm's thread context
             if (sender != null)
             {
-                try
-                {
-                    ownerForm.Invoke(new UpdateProgressChanged(auBackend_ProgressChanged), new object[] { null, progress });
-                }
-                catch (ObjectDisposedException) { /* The main form is already closed, so there's nothing useful to be done. */ }
-
+                // call this function from ownerForm's thread context
+                InvokeMyself(new UpdateProgressChanged(auBackend_ProgressChanged), new object[] {null, progress});
                 return;
             }
 
@@ -905,17 +863,10 @@ namespace wyDay.Controls
 
         void auBackend_ClosingAborted(object sender, EventArgs e)
         {
-            // call this function from ownerForm's thread context
             if (sender != null)
             {
-                try
-                {
-                    //TODO: properly queue events is !ownerForm.IsHandleCreated
-                    if (ownerForm.IsHandleCreated)
-                        ownerForm.Invoke(new EventHandler(auBackend_ClosingAborted), new object[] { null, e });
-                }
-                catch (ObjectDisposedException) { /* The main form is already closed, so there's nothing useful to be done. */ }
-   
+                // call this function from ownerForm's thread context
+                InvokeMyself(new EventHandler(auBackend_ClosingAborted), new object[] {null, e});
                 return;
             }
 
@@ -932,15 +883,10 @@ namespace wyDay.Controls
 
         void auBackend_UpdateStepMismatch(object sender, EventArgs e)
         {
-            // call this function from ownerForm's thread context
             if (sender != null)
             {
-                try
-                {
-                    ownerForm.Invoke(new EventHandler(auBackend_UpdateStepMismatch), new object[] { null, e });
-                }
-                catch (ObjectDisposedException) { /* The main form is already closed, so there's nothing useful to be done. */ }
-
+                // call this function from ownerForm's thread context
+                InvokeMyself(new EventHandler(auBackend_UpdateStepMismatch), new object[] {null, e});
                 return;
             }
 
@@ -965,10 +911,14 @@ namespace wyDay.Controls
             set
             {
                 if (ownerForm != null)
+                {
                     ownerForm.Load -= ownerForm_Load;
+                    ownerForm.HandleCreated -= ownerForm_HandleCreated;
+                }
 
                 ownerForm = value;
                 ownerForm.Load += ownerForm_Load;
+                ownerForm.HandleCreated += ownerForm_HandleCreated;
             }
         }
 
