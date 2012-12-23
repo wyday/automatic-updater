@@ -534,6 +534,9 @@ namespace wyDay.Controls
                         InvokeMyself((Delegate)ev[0], (object[])ev[1]);
                     }
                 }
+
+                // free up the memory
+                EventBuffer.Clear();
             }
         }
 
