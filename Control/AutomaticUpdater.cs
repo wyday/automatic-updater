@@ -507,7 +507,10 @@ namespace wyDay.Controls
         {
             if (!ownerForm.IsHandleCreated)
             {
-                EventBuffer.Add(new object[] { method, args });
+                lock (EventBuffer)
+                {
+                    EventBuffer.Add(new object[] { method, args });
+                }
             }
             else
             {
@@ -521,12 +524,15 @@ namespace wyDay.Controls
 
         void ownerForm_HandleCreated(object sender, EventArgs e)
         {
-            // call any pending events
-            if (EventBuffer.Count > 0)
+            lock (EventBuffer)
             {
-                foreach (object[] ev in EventBuffer)
+                // call any pending events
+                if (EventBuffer.Count > 0)
                 {
-                    InvokeMyself((Delegate)ev[0], (object[])ev[1]);
+                    foreach (object[] ev in EventBuffer)
+                    {
+                        InvokeMyself((Delegate)ev[0], (object[])ev[1]);
+                    }
                 }
             }
         }
